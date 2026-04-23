@@ -122,129 +122,135 @@ export default function MyUnit() {
   };
 
   return (
-    <div className="grid gap-6">
-      {/* Header */}
-      <header>
-        <h1 className="text-3xl font-semibold text-[#0b4a81]">My Unit</h1>
-        <p className="text-slate-600 mt-2">Your assigned unit details and information.</p>
-      </header>
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* Header */}
+        <header className="mb-8">
+          <h1 className="text-4xl font-bold text-white">My Unit</h1>
+          <p className="text-slate-300 mt-2 text-lg">Your assigned unit details and information</p>
+        </header>
 
-      {loading ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {[1, 2, 3, 4].map((i) => (
-            <div key={i} className="rounded-lg bg-white p-6 shadow-sm border border-gray-100">
-              <div className="animate-pulse">
-                <div className="h-4 bg-gray-200 rounded w-3/4 mb-2"></div>
-                <div className="h-4 bg-gray-200 rounded w-2/4 mb-2"></div>
-                <div className="h-4 bg-gray-200 rounded"></div>
-              </div>
-            </div>
-          ))}
-        </div>
-      ) : error ? (
-        <div className="rounded-lg bg-red-50 border border-red-200 p-6">
-          <p className="text-red-700">{error}</p>
-        </div>
-      ) : !tenantData ? (
-        <div className="rounded-lg bg-white p-6 shadow-sm border border-gray-100">
-          <h2 className="text-lg font-semibold text-slate-900 mb-4">No Unit Assignment</h2>
-          <p className="text-slate-600">You don't have any unit assignments yet.</p>
-          <p className="text-sm text-slate-500 mt-2">Contact your property manager for more information.</p>
-        </div>
-      ) : (
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Property Information */}
-          <div className="rounded-lg bg-white p-6 shadow-sm border border-gray-100">
-            <h2 className="text-lg font-semibold text-[#0b4a81] mb-4">Property Information</h2>
-            <div className="space-y-4">
-              <div>
-                <h3 className="text-sm font-medium text-slate-700">Property Name</h3>
-                <p className="text-lg text-slate-900">{property?.name || "Loading..."}</p>
-              </div>
-              {property?.address && (
-                <div>
-                  <h3 className="text-sm font-medium text-slate-700">Address</h3>
-                  <p className="text-slate-900">{property.address}</p>
+        {loading ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {[1, 2, 3, 4].map((i) => (
+              <div key={i} className="bg-white/10 backdrop-blur-lg rounded-xl shadow-lg border border-white/20 p-6">
+                <div className="animate-pulse">
+                  <div className="h-4 bg-white/20 rounded w-3/4 mb-2"></div>
+                  <div className="h-4 bg-white/20 rounded w-2/4 mb-2"></div>
+                  <div className="h-4 bg-white/20 rounded"></div>
                 </div>
-              )}
-            </div>
-          </div>
-
-          {/* Unit Information */}
-          <div className="rounded-lg bg-white p-6 shadow-sm border border-gray-100">
-            <h2 className="text-lg font-semibold text-[#0b4a81] mb-4">Unit Information</h2>
-            <div className="space-y-4">
-              <div>
-                <h3 className="text-sm font-medium text-slate-700">Unit Name</h3>
-                <p className="text-lg text-slate-900">{unit?.name || "Loading..."}</p>
               </div>
-              <div>
-                <h3 className="text-sm font-medium text-slate-700">Status</h3>
-                <p className="text-lg">
-                  <span className={`inline-flex px-3 py-1 text-sm font-medium rounded-full ${
+            ))}
+          </div>
+        ) : error ? (
+          <div className="bg-red-500/20 border border-red-500/50 rounded-xl p-6">
+            <p className="text-red-200">{error}</p>
+          </div>
+        ) : !tenantData ? (
+          <div className="bg-white/10 backdrop-blur-lg rounded-xl shadow-lg border border-white/20 p-6">
+            <h2 className="text-lg font-semibold text-white mb-4">No Unit Assignment</h2>
+            <p className="text-slate-300">You don't have any unit assignments yet.</p>
+            <p className="text-sm text-slate-400 mt-2">Contact your property manager for more information.</p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* Property & Unit Information */}
+            <div className="bg-white/10 backdrop-blur-lg rounded-xl shadow-lg border border-white/20 p-6 hover:bg-white/20 transition-all duration-300">
+              <h2 className="text-lg font-semibold text-emerald-400 mb-6">Property & Unit Information</h2>
+              <div className="space-y-5">
+                {/* Property Name */}
+                <div>
+                  <h3 className="text-xs font-medium text-slate-400 uppercase tracking-wide mb-1">Property Name</h3>
+                  <p className="text-lg font-semibold text-white">{property?.name || "Loading..."}</p>
+                </div>
+                {/* Address */}
+                {property?.address && (
+                  <div>
+                    <h3 className="text-xs font-medium text-slate-400 uppercase tracking-wide mb-1">Address</h3>
+                    <p className="text-white">{property.address}</p>
+                  </div>
+                )}
+                {/* Unit Name */}
+                <div>
+                  <h3 className="text-xs font-medium text-slate-400 uppercase tracking-wide mb-1">Unit Name</h3>
+                  <p className="text-lg font-semibold text-white">{unit?.name || "Loading..."}</p>
+                </div>
+                {/* Status */}
+                <div className="flex items-center gap-3">
+                  <h3 className="text-xs font-medium text-slate-400 uppercase tracking-wide">Status</h3>
+                  <span className={`inline-flex px-3 py-1 text-xs font-medium rounded-full ${
                     unit?.status === 'occupied' 
-                      ? 'bg-green-100 text-green-800' 
-                      : 'bg-gray-100 text-gray-800'
+                      ? 'bg-emerald-500/30 text-emerald-300' 
+                      : 'bg-white/10 text-slate-300'
                   }`}>
                     {unit?.status || "Loading..."}
                   </span>
-                </p>
+                </div>
               </div>
-              <div>
-                <h3 className="text-sm font-medium text-slate-700">Monthly Rent</h3>
-                <p className="text-lg text-slate-900">
-                  ₱{tenantData.monthly_rent?.toFixed(2) || "Loading..."}
-                </p>
-              </div>
-              <div>
-                <h3 className="text-sm font-medium text-slate-700">Due Day</h3>
-                <p className="text-lg text-slate-900">
-                  {tenantData.due_day || "Loading..."}
-                </p>
-              </div>
-              {tenantData.move_in_date && (
+            </div>
+
+            {/* Financial Information */}
+            <div className="bg-white/10 backdrop-blur-lg rounded-xl shadow-lg border border-white/20 p-6 hover:bg-white/20 transition-all duration-300">
+              <h2 className="text-lg font-semibold text-emerald-400 mb-6">Financial Information</h2>
+              <div className="space-y-5">
+                {/* Monthly Rent */}
                 <div>
-                  <h3 className="text-sm font-medium text-slate-700">Move-in Date</h3>
-                  <p className="text-lg text-slate-900">
-                    {new Date(tenantData.move_in_date).toLocaleDateString()}
+                  <h3 className="text-xs font-medium text-slate-400 uppercase tracking-wide mb-1">Monthly Rent</h3>
+                  <p className="text-2xl font-bold text-white">
+                    ₱{tenantData.monthly_rent?.toFixed(2) || "Loading..."}
                   </p>
                 </div>
-              )}
-              <div>
-                <h3 className="text-sm font-medium text-slate-700">Account Status</h3>
-                <p className="text-lg">
-                  <span className={`inline-flex px-3 py-1 text-sm font-medium rounded-full ${
+                {/* Due Day */}
+                <div>
+                  <h3 className="text-xs font-medium text-slate-400 uppercase tracking-wide mb-1">Due Day</h3>
+                  <p className="text-lg text-white">
+                    Day {tenantData.due_day || "Loading..."} of each month
+                  </p>
+                </div>
+                {/* Move-in Date */}
+                {tenantData.move_in_date && (
+                  <div>
+                    <h3 className="text-xs font-medium text-slate-400 uppercase tracking-wide mb-1">Move-in Date</h3>
+                    <p className="text-lg text-white">
+                      {new Date(tenantData.move_in_date).toLocaleDateString()}
+                    </p>
+                  </div>
+                )}
+                {/* Account Status */}
+                <div className="flex items-center gap-3">
+                  <h3 className="text-xs font-medium text-slate-400 uppercase tracking-wide">Account Status</h3>
+                  <span className={`inline-flex px-3 py-1 text-xs font-medium rounded-full ${
                     tenantData.account_status === 'active' 
-                      ? 'bg-green-100 text-green-800' 
-                      : 'bg-gray-100 text-gray-800'
+                      ? 'bg-emerald-500/30 text-emerald-300' 
+                      : 'bg-white/10 text-slate-300'
                   }`}>
                     {tenantData.account_status || "Loading..."}
                   </span>
-                </p>
+                </div>
               </div>
             </div>
-          </div>
 
-          {/* Additional Details */}
-          <div className="rounded-lg bg-white p-6 shadow-sm border border-gray-100">
-            <h2 className="text-lg font-semibold text-[#0b4a81] mb-4">Rental Details</h2>
-            <div className="space-y-4">
-              <div>
-                <h3 className="text-sm font-medium text-slate-700">Property Manager Contact</h3>
-                <p className="text-slate-900">Contact your property manager for any questions or maintenance requests.</p>
-              </div>
-              <div>
-                <h3 className="text-sm font-medium text-slate-700">Emergency Contact</h3>
-                <p className="text-slate-900">For urgent maintenance issues, contact emergency services.</p>
-              </div>
-              <div>
-                <h3 className="text-sm font-medium text-slate-700">Community Guidelines</h3>
-                <p className="text-slate-900">Please review community rules and regulations.</p>
+            {/* Contact & Guidelines */}
+            <div className="md:col-span-2 bg-white/10 backdrop-blur-lg rounded-xl shadow-lg border border-white/20 p-6 hover:bg-white/20 transition-all duration-300">
+              <h2 className="text-lg font-semibold text-emerald-400 mb-6">Contact & Guidelines</h2>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div>
+                  <h3 className="text-xs font-medium text-slate-400 uppercase tracking-wide mb-2">Property Owner Contact</h3>
+                  <p className="text-white text-sm">Contact your property owner for any questions or maintenance requests.</p>
+                </div>
+                <div>
+                  <h3 className="text-xs font-medium text-slate-400 uppercase tracking-wide mb-2">Emergency Contact</h3>
+                  <p className="text-white text-sm">For urgent maintenance issues, contact emergency services.</p>
+                </div>
+                <div>
+                  <h3 className="text-xs font-medium text-slate-400 uppercase tracking-wide mb-2">Community Guidelines</h3>
+                  <p className="text-white text-sm">Please review community rules and regulations.</p>
+                </div>
               </div>
             </div>
           </div>
-        </div>
-      )}
+        )}
+      </div>
     </div>
   );
 }

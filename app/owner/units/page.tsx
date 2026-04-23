@@ -1,149 +1,52 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import Link from "next/link";
 import { supabase } from "@/lib/supabase";
+import Link from "next/link";
 
 interface Unit {
   id: string;
   name: string;
-  property_id: string;
   monthly_rent: number;
   status: string;
   notes: string;
-  created_at: string;
-}
-
-interface Property {
-  id: string;
-  name: string;
-  owner_id: string;
-}
-
-interface UnitWithProperty extends Unit {
-  propertyName: string;
-  tenantName: string;
+  properties: {
+    id: string;
+    name: string;
+  };
 }
 
 export default function UnitsPage() {
-  const [units, setUnits] = useState<UnitWithProperty[]>([]);
+  const [units, setUnits] = useState<Unit[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
 
-  // Fetch units for the logged-in owner with property information
   const fetchUnits = async () => {
     setLoading(true);
     setError(null);
 
     try {
-      // Get current user
       const { data: { user } } = await supabase.auth.getUser();
       
       if (!user) {
         throw new Error("User not authenticated");
       }
 
-      console.log("=== Owner Units Page Debug ===");
-      console.log("Auth user ID:", user.id);
-
-      // Step 1: Load properties for this owner
-      const { data: propertiesData, error: propertiesError } = await supabase
-        .from('properties')
-        .select('id, name')
-        .eq('owner_id', user.id);
-
-      if (propertiesError) {
-        console.error("Properties fetch error:", propertiesError);
-        throw propertiesError;
-      }
-
-      console.log("Properties query result:", propertiesData);
-      console.log("Properties query result length:", propertiesData?.length || 0);
-
-      if (!propertiesData || propertiesData.length === 0) {
-        console.log("No properties found for this owner");
-        setUnits([]);
-        return;
-      }
-
-      // Step 2: Load units for these properties
-      const propertyIds = propertiesData.map(p => p.id);
-      console.log("Property IDs for units query:", propertyIds);
-
-      const { data: unitsData, error: unitsError } = await supabase
+      const { data, error } = await supabase
         .from('units')
-        .select('*')
-        .in('property_id', propertyIds)
-        .order('created_at', { ascending: false });
+        .select(`
+          *,
+          properties (
+            id,
+            name
+          )
+        `)
+        .eq('properties.owner_id', user.id);
 
-      if (unitsError) {
-        console.error("Units fetch error:", unitsError);
-        throw unitsError;
-      }
+      if (error) throw error;
 
-      console.log("Raw units rows:", unitsData);
-      console.log("Units query result length:", unitsData?.length || 0);
-
-      // Step 3: Load tenant assignments for these units
-      const unitIds = unitsData.map(u => u.id);
-      console.log("Unit IDs for tenant query:", unitIds);
-      
-      const { data: tenantRows, error: tenantsError } = await supabase
-        .from('tenants')
-        .select('unit_id, profile_id')
-        .in('unit_id', unitIds);
-
-      if (tenantsError) {
-        console.error("Tenants fetch error:", tenantsError);
-        throw tenantsError;
-      }
-
-      console.log("Raw tenant rows:", tenantRows);
-      console.log("Tenants query result length:", tenantRows?.length || 0);
-
-      // Step 4: Load profiles for tenant names
-      const profileIds = tenantRows?.map(t => t.profile_id) || [];
-      console.log("Profile IDs for profiles query:", profileIds);
-
-      let profilesData: any[] = [];
-      if (profileIds.length > 0) {
-        const { data: profiles, error: profilesError } = await supabase
-          .from('profiles')
-          .select('id, full_name')
-          .in('id', profileIds);
-
-        if (profilesError) {
-          console.error("Profiles fetch error:", profilesError);
-          throw profilesError;
-        }
-
-        profilesData = profiles || [];
-        console.log("Raw profile rows:", profilesData);
-        console.log("Profiles query result length:", profilesData?.length || 0);
-      }
-
-      // Step 5: Map all data together
-      const propertyMap = new Map(propertiesData.map(p => [p.id, p.name]));
-      const profileMap = new Map(profilesData.map(p => [p.id, p.full_name]));
-      const tenantMap = new Map(tenantRows?.map(t => [t.unit_id, t.profile_id]) || []);
-
-      const unitsWithProperty: UnitWithProperty[] = unitsData.map(unit => {
-        const profileId = tenantMap.get(unit.id);
-        const tenantName = profileId ? profileMap.get(profileId) || "Unknown" : "-";
-        
-        return {
-          ...unit,
-          propertyName: propertyMap.get(unit.property_id) || "Unknown Property",
-          tenantName: tenantName
-        };
-      });
-
-      console.log("Final mapped units list:", unitsWithProperty);
-      console.log("Final units for rendering:", unitsWithProperty);
-      console.log("=== End Owner Units Debug ===");
-
-      setUnits(unitsWithProperty);
-      
+      setUnits(data || []);
     } catch (err: any) {
       console.error("Error fetching units:", err);
       setError(err.message || "Failed to load units");
@@ -152,137 +55,120 @@ export default function UnitsPage() {
     }
   };
 
-  // Delete unit with confirmation
-  const handleDelete = async (unit: UnitWithProperty) => {
-    if (confirm(`Are you sure you want to delete "${unit.name}"? This action cannot be undone.`)) {
-      try {
-        const { error: deleteError } = await supabase
-          .from('units')
-          .delete()
-          .eq('id', unit.id);
-
-        if (deleteError) {
-          console.error("Delete error:", deleteError);
-          throw deleteError;
-        }
-
-        console.log("Unit deleted successfully:", unit.name);
-        
-        // Refresh the units list
-        await fetchUnits();
-        
-      } catch (err: any) {
-        console.error("Error deleting unit:", err);
-        setError(err.message || "Failed to delete unit");
-      }
-    }
-  };
-
-  // Fetch units on component mount
   useEffect(() => {
     fetchUnits();
   }, []);
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'occupied':
-        return 'bg-green-100 text-green-800';
-      case 'vacant':
-        return 'bg-orange-100 text-orange-800';
-      case 'maintenance':
-        return 'bg-blue-100 text-blue-800';
-      case 'unavailable':
-        return 'bg-gray-100 text-gray-800';
-      default:
-        return 'bg-gray-100 text-gray-800';
+  const handleDelete = async (id: string) => {
+    if (!confirm("Are you sure you want to delete this unit?")) {
+      return;
+    }
+
+    setDeletingId(id);
+    try {
+      const { error } = await supabase.from('units').delete().eq('id', id);
+      if (error) throw error;
+      await fetchUnits();
+    } catch (err: any) {
+      console.error("Error deleting unit:", err);
+      setError(err.message || "Failed to delete unit");
+    } finally {
+      setDeletingId(null);
     }
   };
 
-  return (
-    <div className="grid gap-6">
-      {/* Header */}
-      <header>
-        <h1 className="text-3xl font-semibold text-[#012a4a]">Units</h1>
-        <p className="text-slate-600 mt-2">View and manage all rental units across your properties.</p>
-      </header>
-
-      {/* Error Display */}
-      {error && (
-        <div className="rounded-lg bg-red-50 border border-red-200 p-4">
-          <p className="text-sm text-red-800">{error}</p>
-        </div>
-      )}
-
-      {/* Actions Bar */}
-      <div className="flex items-center justify-between gap-4">
-        <div className="flex gap-2 flex-1 max-w-md">
-          <input
-            type="text"
-            placeholder="Search units..."
-            className="flex-1 rounded-md border border-gray-200 p-2.5 text-sm"
-          />
-          <select className="rounded-md border border-gray-200 p-2.5 text-sm">
-            <option value="">All Status</option>
-            <option value="occupied">Occupied</option>
-            <option value="vacant">Vacant</option>
-          </select>
-        </div>
-        <Link
-          href="/owner/units/add"
-          className="rounded-md bg-[#012a4a] px-4 py-2.5 text-white text-sm hover:bg-[#0a1f35]"
-        >
-          Add Unit
-        </Link>
-      </div>
-
-      {/* Units Table */}
-      <div className="rounded-lg bg-white shadow-sm border border-gray-100 overflow-hidden">
-        {loading ? (
-          <div className="text-center py-8 text-slate-500">
-            <p className="text-sm">Loading units...</p>
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <header>
+            <h1 className="text-4xl font-bold text-white">Units</h1>
+            <p className="text-slate-300 mt-2 text-lg">Manage your rental units</p>
+          </header>
+          <div className="text-center py-12">
+            <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-white"></div>
+            <p className="text-slate-300 mt-4">Loading units...</p>
           </div>
-        ) : units.length === 0 ? (
-          <div className="text-center py-8 text-slate-500">
-            <p className="text-sm">No units added yet</p>
-            <p className="text-xs mt-2">Add units to your properties to get started</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <header>
+            <h1 className="text-4xl font-bold text-white">Units</h1>
+            <p className="text-slate-300 mt-2 text-lg">Manage your rental units</p>
+          </header>
+          <div className="bg-red-500/20 border border-red-500/50 rounded-xl p-6">
+            <p className="text-red-200">{error}</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <header className="flex justify-between items-center mb-8">
+          <div>
+            <h1 className="text-4xl font-bold text-white">Units</h1>
+            <p className="text-slate-300 mt-2 text-lg">Manage your rental units</p>
+          </div>
+          <Link
+            href="/owner/units/add"
+            className="px-6 py-3 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-xl hover:from-blue-600 hover:to-blue-700 transition-all duration-300 shadow-lg hover:shadow-blue-500/50 font-medium"
+          >
+            Add Unit
+          </Link>
+        </header>
+
+        {units.length === 0 ? (
+          <div className="bg-white/10 backdrop-blur-lg rounded-xl shadow-lg border border-white/20 p-12 text-center">
+            <p className="text-slate-300 mb-4">No units yet</p>
+            <Link
+              href="/owner/units/add"
+              className="text-blue-400 hover:text-blue-300 transition-colors"
+            >
+              Add your first unit
+            </Link>
           </div>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead className="bg-gray-50 border-b border-gray-200">
-                <tr>
-                  <th className="px-6 py-3 text-left text-sm font-medium text-slate-600">Unit</th>
-                  <th className="px-6 py-3 text-left text-sm font-medium text-slate-600">Property</th>
-                  <th className="px-6 py-3 text-left text-sm font-medium text-slate-600">Tenant</th>
-                  <th className="px-6 py-3 text-left text-sm font-medium text-slate-600">Status</th>
-                  <th className="px-6 py-3 text-left text-sm font-medium text-slate-600">Rent</th>
-                  <th className="px-6 py-3 text-left text-sm font-medium text-slate-600">Action</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-200">
-                {units.map((unit) => (
-                  <tr key={unit.id} className="hover:bg-gray-50">
-                    <td className="px-6 py-4 text-sm text-slate-900">{unit.name}</td>
-                    <td className="px-6 py-4 text-sm text-slate-600">{unit.propertyName}</td>
-                    <td className="px-6 py-4 text-sm text-slate-600">{unit.tenantName}</td>
-                    <td className="px-6 py-4 text-sm">
-                      <span className={`px-2 py-1 rounded-full text-xs ${getStatusColor(unit.status)}`}>
-                        {unit.status}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 text-sm text-slate-900">₱{unit.monthly_rent.toLocaleString()}</td>
-                    <td className="px-6 py-4 text-sm">
-                      <button
-                        onClick={() => handleDelete(unit)}
-                        className="text-red-600 hover:text-red-800"
-                      >
-                        Delete
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+          <div className="grid gap-4">
+            {units.map((unit) => (
+              <div
+                key={unit.id}
+                className="bg-white/10 backdrop-blur-lg rounded-xl shadow-lg border border-white/20 p-6 hover:bg-white/20 transition-all duration-300"
+              >
+                <div className="flex justify-between items-start">
+                  <div className="flex-1">
+                    <h3 className="text-lg font-semibold text-white">{unit.name}</h3>
+                    <p className="text-slate-400 mt-1">{unit.properties.name}</p>
+                    {unit.notes && <p className="text-slate-500 text-sm mt-1">{unit.notes}</p>}
+                  </div>
+                  <div className="text-right mr-4">
+                    <p className="text-lg font-semibold text-white">₱{unit.monthly_rent.toLocaleString()}</p>
+                    <span className={`inline-block px-2 py-1 text-xs rounded-full mt-2 ${
+                      unit.status === 'occupied' 
+                        ? 'bg-emerald-500/30 text-emerald-300' 
+                        : 'bg-amber-500/30 text-amber-300'
+                    }`}>
+                      {unit.status}
+                    </span>
+                  </div>
+                  <button
+                    onClick={() => handleDelete(unit.id)}
+                    disabled={deletingId === unit.id}
+                    className="px-4 py-2 text-sm text-red-400 hover:bg-red-500/20 rounded-lg transition-colors disabled:opacity-50"
+                  >
+                    {deletingId === unit.id ? "Deleting..." : "Delete"}
+                  </button>
+                </div>
+              </div>
+            ))}
           </div>
         )}
       </div>

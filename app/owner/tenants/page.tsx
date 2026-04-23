@@ -197,99 +197,101 @@ export default function TenantsList() {
   };
 
   return (
-    <div className="grid gap-6">
-      {/* Header */}
-      <header>
-        <h1 className="text-3xl font-semibold text-[#012a4a]">Tenants</h1>
-        <p className="text-slate-600 mt-2">Manage tenant accounts and assignments.</p>
-      </header>
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* Header */}
+        <header className="mb-8">
+          <h1 className="text-4xl font-bold text-white">Tenants</h1>
+          <p className="text-slate-300 mt-2 text-lg">Manage tenant accounts and assignments</p>
+        </header>
 
-      {/* Actions Bar */}
-      <div className="flex items-center justify-between gap-4">
-        <div className="flex-1 max-w-md">
-          <input
-            type="text"
-            placeholder="Search tenants..."
-            className="w-full rounded-md border border-gray-200 p-2.5 text-sm"
-          />
-        </div>
-        <Link
-          href="/owner/tenants/add"
-          className="rounded-md bg-[#012a4a] px-4 py-2.5 text-white text-sm hover:bg-[#0a1f35]"
-        >
-          Add Tenant
-        </Link>
-      </div>
-
-      {/* Tenants Table */}
-      <div className="rounded-lg bg-white shadow-sm border border-gray-100 overflow-hidden">
-        {error && (
-          <div className="p-4 bg-red-50 border border-red-200">
-            <p className="text-sm text-red-700">{error}</p>
+        {/* Actions Bar */}
+        <div className="flex items-center justify-between gap-4 mb-8">
+          <div className="flex-1 max-w-md">
+            <input
+              type="text"
+              placeholder="Search tenants..."
+              className="w-full rounded-xl bg-white/10 border border-white/20 p-3 text-sm text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+            />
           </div>
-        )}
-        
-        <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead className="bg-gray-50 border-b border-gray-200">
-              <tr>
-                <th className="px-6 py-3 text-left text-sm font-medium text-slate-600">Full Name</th>
-                <th className="px-6 py-3 text-left text-sm font-medium text-slate-600">Email</th>
-                <th className="px-6 py-3 text-left text-sm font-medium text-slate-600">Assigned Property</th>
-                <th className="px-6 py-3 text-left text-sm font-medium text-slate-600">Assigned Unit</th>
-                <th className="px-6 py-3 text-left text-sm font-medium text-slate-600">Move-in Date</th>
-                <th className="px-6 py-3 text-left text-sm font-medium text-slate-600">Account Status</th>
-                <th className="px-6 py-3 text-left text-sm font-medium text-slate-600">Action</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-200">
-              {loading ? (
+          <Link
+            href="/owner/tenants/add"
+            className="px-6 py-3 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-xl hover:from-blue-600 hover:to-blue-700 transition-all duration-300 shadow-lg hover:shadow-blue-500/50 font-medium"
+          >
+            Add Tenant
+          </Link>
+        </div>
+
+        {/* Tenants Table */}
+        <div className="bg-white/10 backdrop-blur-lg rounded-xl shadow-lg border border-white/20 overflow-hidden">
+          {error && (
+            <div className="p-4 bg-red-500/20 border border-red-500/50">
+              <p className="text-sm text-red-200">{error}</p>
+            </div>
+          )}
+          
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead className="bg-white/5 border-b border-white/10">
                 <tr>
-                  <td colSpan={7} className="px-6 py-8 text-center text-slate-500">
-                    <p className="text-sm">Loading tenants...</p>
-                  </td>
+                  <th className="px-6 py-3 text-left text-sm font-medium text-slate-300">Full Name</th>
+                  <th className="px-6 py-3 text-left text-sm font-medium text-slate-300">Email</th>
+                  <th className="px-6 py-3 text-left text-sm font-medium text-slate-300">Assigned Property</th>
+                  <th className="px-6 py-3 text-left text-sm font-medium text-slate-300">Assigned Unit</th>
+                  <th className="px-6 py-3 text-left text-sm font-medium text-slate-300">Move-in Date</th>
+                  <th className="px-6 py-3 text-left text-sm font-medium text-slate-300">Account Status</th>
+                  <th className="px-6 py-3 text-left text-sm font-medium text-slate-300">Action</th>
                 </tr>
-              ) : tenants.length === 0 ? (
-                /* Empty state */
-                <tr>
-                  <td colSpan={7} className="px-6 py-8 text-center text-slate-500">
-                    <p className="text-sm">No tenants added yet</p>
-                    <p className="text-xs mt-2">Add your first tenant to get started</p>
-                  </td>
-                </tr>
-              ) : (
-                /* Real tenant data */
-                tenants.map((tenant) => (
-                  <tr key={tenant.id}>
-                    <td className="px-6 py-4 text-sm text-slate-900">{tenant.full_name}</td>
-                    <td className="px-6 py-4 text-sm text-slate-900">{tenant.email}</td>
-                    <td className="px-6 py-4 text-sm text-slate-900">{tenant.property_name}</td>
-                    <td className="px-6 py-4 text-sm text-slate-900">{tenant.unit_name}</td>
-                    <td className="px-6 py-4 text-sm text-slate-900">
-                      {tenant.move_in_date ? new Date(tenant.move_in_date).toLocaleDateString() : "Not set"}
-                    </td>
-                    <td className="px-6 py-4 text-sm text-slate-900">
-                      <span className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${
-                        tenant.account_status === 'active' 
-                          ? 'bg-green-100 text-green-800' 
-                          : 'bg-gray-100 text-gray-800'
-                      }`}>
-                        {tenant.account_status}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 text-sm text-slate-900">
-                      <button
-                        onClick={() => handleDelete(tenant.id, tenant.full_name)}
-                        className="text-red-600 hover:text-red-800 text-sm font-medium"
-                      >
-                        Delete
-                      </button>
+              </thead>
+              <tbody className="divide-y divide-white/10">
+                {loading ? (
+                  <tr>
+                    <td colSpan={7} className="px-6 py-8 text-center text-slate-400">
+                      <p className="text-sm">Loading tenants...</p>
                     </td>
                   </tr>
-                ))
-              )}
-            </tbody>
-          </table>
+                ) : tenants.length === 0 ? (
+                  /* Empty state */
+                  <tr>
+                    <td colSpan={7} className="px-6 py-8 text-center text-slate-400">
+                      <p className="text-sm">No tenants added yet</p>
+                      <p className="text-xs mt-2">Add your first tenant to get started</p>
+                    </td>
+                  </tr>
+                ) : (
+                  /* Real tenant data */
+                  tenants.map((tenant) => (
+                    <tr key={tenant.id}>
+                      <td className="px-6 py-4 text-sm text-white">{tenant.full_name}</td>
+                      <td className="px-6 py-4 text-sm text-white">{tenant.email}</td>
+                      <td className="px-6 py-4 text-sm text-white">{tenant.property_name}</td>
+                      <td className="px-6 py-4 text-sm text-white">{tenant.unit_name}</td>
+                      <td className="px-6 py-4 text-sm text-white">
+                        {tenant.move_in_date ? new Date(tenant.move_in_date).toLocaleDateString() : "Not set"}
+                      </td>
+                      <td className="px-6 py-4 text-sm text-white">
+                        <span className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${
+                          tenant.account_status === 'active' 
+                            ? 'bg-emerald-500/30 text-emerald-300' 
+                            : 'bg-white/10 text-slate-300'
+                        }`}>
+                          {tenant.account_status}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 text-sm text-white">
+                        <button
+                          onClick={() => handleDelete(tenant.id, tenant.full_name)}
+                          className="text-red-400 hover:text-red-300 text-sm font-medium transition-colors"
+                        >
+                          Delete
+                        </button>
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
         </div>
       </div>
     </div>

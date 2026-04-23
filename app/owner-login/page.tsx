@@ -64,50 +64,58 @@ export default function OwnerLogin() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 grid place-items-center">
-      <div className="w-full max-w-md bg-white rounded-xl p-8 shadow-md">
-        <h1 className="text-2xl font-semibold text-[#012a4a]">Owner Login</h1>
-        <p className="text-sm text-slate-600 mt-2">Sign in to your owner account.</p>
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 grid place-items-center">
+      <div className="w-full max-w-md bg-white/10 backdrop-blur-lg rounded-2xl p-8 shadow-2xl border border-white/20">
+        <div className="text-center mb-8">
+          <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg">
+            <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+            </svg>
+          </div>
+          <h1 className="text-3xl font-bold text-white">Owner Login</h1>
+          <p className="text-slate-300 mt-2">Sign in to your owner account</p>
+        </div>
 
         {error && (
-          <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded-md text-sm text-red-700">
+          <div className="mb-6 p-4 bg-red-500/20 border border-red-500/50 rounded-xl text-sm text-red-200">
             {error}
           </div>
         )}
 
-        <form onSubmit={handleSignIn} className="mt-6 space-y-4">
+        <form onSubmit={handleSignIn} className="space-y-5">
           <div>
-            <label className="block text-sm text-slate-600">Email</label>
+            <label className="block text-sm font-medium text-slate-300 mb-2">Email</label>
             <input
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="mt-1 w-full rounded-md border border-gray-200 p-2"
+              className="w-full rounded-xl bg-white/10 border border-white/20 p-3 text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
               placeholder="you@company.com"
               disabled={loading}
             />
           </div>
           <div>
-            <label className="block text-sm text-slate-600">Password</label>
+            <label className="block text-sm font-medium text-slate-300 mb-2">Password</label>
             <input
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="mt-1 w-full rounded-md border border-gray-200 p-2"
+              className="w-full rounded-xl bg-white/10 border border-white/20 p-3 text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
               placeholder="••••••••"
               disabled={loading}
             />
           </div>
 
-          <div className="flex items-center justify-between">
-            <button
-              type="submit"
-              disabled={loading}
-              className="inline-block rounded-md bg-[#012a4a] px-4 py-2 text-white disabled:opacity-50"
-            >
-              {loading ? "Signing in..." : "Sign in"}
-            </button>
-            <Link href="/" className="text-sm text-slate-500 hover:text-slate-700">Back</Link>
+          <button
+            type="submit"
+            disabled={loading}
+            className="w-full rounded-xl bg-gradient-to-r from-blue-500 to-blue-600 px-4 py-3 text-white font-semibold hover:from-blue-600 hover:to-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 shadow-lg hover:shadow-blue-500/50"
+          >
+            {loading ? "Signing in..." : "Sign in"}
+          </button>
+
+          <div className="text-center">
+            <Link href="/" className="text-sm text-slate-400 hover:text-white transition-colors">← Back to home</Link>
           </div>
         </form>
       </div>

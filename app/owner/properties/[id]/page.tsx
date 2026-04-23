@@ -159,161 +159,164 @@ export default function PropertyDetailsPage() {
     switch (status) {
       case 'active':
       case 'occupied':
-        return 'bg-green-100 text-green-800';
+        return 'bg-emerald-500/30 text-emerald-300';
       case 'inactive':
       case 'vacant':
-        return 'bg-orange-100 text-orange-800';
+        return 'bg-amber-500/30 text-amber-300';
       case 'maintenance':
-        return 'bg-blue-100 text-blue-800';
+        return 'bg-blue-500/30 text-blue-300';
       case 'unavailable':
-        return 'bg-gray-100 text-gray-800';
+        return 'bg-slate-500/30 text-slate-300';
       default:
-        return 'bg-gray-100 text-gray-800';
+        return 'bg-slate-500/30 text-slate-300';
     }
   };
 
   if (loading) {
     return (
-      <div className="grid gap-6">
-        <header>
-          <div className="flex items-center gap-4">
-            <Link href="/owner/properties" className="text-sm text-[#012a4a] hover:underline">
-              &larr; Back to Properties
-            </Link>
+      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <header>
+            <div className="flex items-center gap-4">
+              <Link href="/owner/properties" className="text-sm text-slate-400 hover:text-white transition-colors">
+                &larr; Back to Properties
+              </Link>
+            </div>
+            <h1 className="text-3xl font-semibold text-white mt-4">Loading...</h1>
+          </header>
+          <div className="text-center py-12">
+            <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-white"></div>
+            <p className="text-slate-300 mt-4">Loading property details...</p>
           </div>
-          <h1 className="text-3xl font-semibold text-[#012a4a] mt-4">Loading...</h1>
-        </header>
+        </div>
       </div>
     );
   }
 
   if (error || !property) {
     return (
-      <div className="grid gap-6">
-        <header>
-          <div className="flex items-center gap-4">
-            <Link href="/owner/properties" className="text-sm text-[#012a4a] hover:underline">
-              &larr; Back to Properties
-            </Link>
-          </div>
-          <h1 className="text-3xl font-semibold text-[#012a4a] mt-4">Error</h1>
-        </header>
-        {error && (
-          <div className="rounded-lg bg-red-50 border border-red-200 p-4">
-            <p className="text-sm text-red-800">{error}</p>
-          </div>
-        )}
+      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <header>
+            <div className="flex items-center gap-4">
+              <Link href="/owner/properties" className="text-sm text-slate-400 hover:text-white transition-colors">
+                &larr; Back to Properties
+              </Link>
+            </div>
+            <h1 className="text-3xl font-semibold text-white mt-4">Error</h1>
+          </header>
+          {error && (
+            <div className="bg-red-500/20 border border-red-500/50 rounded-xl p-6 mt-6">
+              <p className="text-sm text-red-200">{error}</p>
+            </div>
+          )}
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="grid gap-6">
-      {/* Header */}
-      <header>
-        <div className="flex items-center gap-4">
-          <Link 
-            href="/owner/properties" 
-            className="text-sm text-[#012a4a] hover:underline"
-          >
-            &larr; Back to Properties
-          </Link>
-        </div>
-        <h1 className="text-3xl font-semibold text-[#012a4a] mt-4">{property.name}</h1>
-        <p className="text-slate-600 mt-2">View property information, units, and assigned tenants.</p>
-      </header>
-
-      {/* Error Display */}
-      {error && (
-        <div className="rounded-lg bg-red-50 border border-red-200 p-4">
-          <p className="text-sm text-red-800">{error}</p>
-        </div>
-      )}
-
-      {/* Property Information */}
-      <div className="rounded-lg bg-white p-6 shadow-sm border border-gray-100">
-        <h2 className="text-lg font-semibold text-[#012a4a] mb-4">Property Information</h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div>
-            <h3 className="text-sm font-medium text-slate-500 mb-1">Property Name</h3>
-            <p className="text-slate-900">{property.name}</p>
-          </div>
-          <div>
-            <h3 className="text-sm font-medium text-slate-500 mb-1">Type</h3>
-            <p className="text-slate-900">{property.type}</p>
-          </div>
-          <div>
-            <h3 className="text-sm font-medium text-slate-500 mb-1">Address</h3>
-            <p className="text-slate-900">{property.address}</p>
-          </div>
-          <div>
-            <h3 className="text-sm font-medium text-slate-500 mb-1">Status</h3>
-            <span className={`px-2 py-1 rounded-full text-xs ${getStatusColor(property.status)}`}>
-              {property.status}
-            </span>
-          </div>
-          <div className="md:col-span-2">
-            <h3 className="text-sm font-medium text-slate-500 mb-1">Description</h3>
-            <p className="text-slate-900">{property.description || 'No description provided'}</p>
-          </div>
-        </div>
-      </div>
-
-      {/* Units Section */}
-      <div className="rounded-lg bg-white p-6 shadow-sm border border-gray-100">
-        <h2 className="text-lg font-semibold text-[#012a4a] mb-4">Units</h2>
-        {units.length === 0 ? (
-          <div className="text-center py-8 text-slate-500">
-            <p className="text-sm">No units added to this property yet</p>
-            <Link href="/owner/units/add" className="text-sm text-[#012a4a] hover:underline mt-2 inline-block">
-              Add your first unit
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* Header */}
+        <header>
+          <div className="flex items-center gap-4">
+            <Link 
+              href="/owner/properties" 
+              className="text-sm text-slate-400 hover:text-white transition-colors"
+            >
+              &larr; Back to Properties
             </Link>
           </div>
-        ) : (
-          <div className="space-y-3">
-            {units.map((unit) => (
-              <div key={unit.id} className="flex items-center justify-between p-4 border border-gray-200 rounded-lg">
-                <div>
-                  <h4 className="font-medium text-slate-900">{unit.name}</h4>
-                  <p className="text-sm text-slate-600">Rent: ₱{unit.monthly_rent.toLocaleString()}/month</p>
-                </div>
-                <span className={`px-2 py-1 rounded-full text-xs ${getStatusColor(unit.status)}`}>
-                  {unit.status}
-                </span>
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
+          <h1 className="text-3xl font-semibold text-white mt-4">{property.name}</h1>
+          <p className="text-slate-300 mt-2">View property information, units, and assigned tenants.</p>
+        </header>
 
-      {/* Tenants Section */}
-      <div className="rounded-lg bg-white p-6 shadow-sm border border-gray-100">
-        <h2 className="text-lg font-semibold text-[#012a4a] mb-4">Assigned Tenants</h2>
-        {tenants.length === 0 ? (
-          <div className="text-center py-8 text-slate-500">
-            <p className="text-sm">No tenants assigned to this property yet</p>
-            <Link href="/owner/tenants/add" className="text-sm text-[#012a4a] hover:underline mt-2 inline-block">
-              Add your first tenant
-            </Link>
+        {/* Property Information */}
+        <div className="bg-white/10 backdrop-blur-lg rounded-xl shadow-lg border border-white/20 p-6 mt-8 hover:bg-white/20 transition-all duration-300">
+          <h2 className="text-lg font-semibold text-emerald-400 mb-6">Property Information</h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+              <h3 className="text-xs font-medium text-slate-400 uppercase tracking-wide mb-1">Property Name</h3>
+              <p className="text-lg text-white">{property.name}</p>
+            </div>
+            <div>
+              <h3 className="text-xs font-medium text-slate-400 uppercase tracking-wide mb-1">Type</h3>
+              <p className="text-lg text-white">{property.type}</p>
+            </div>
+            <div>
+              <h3 className="text-xs font-medium text-slate-400 uppercase tracking-wide mb-1">Address</h3>
+              <p className="text-white">{property.address}</p>
+            </div>
+            <div>
+              <h3 className="text-xs font-medium text-slate-400 uppercase tracking-wide mb-1">Status</h3>
+              <span className={`px-3 py-1 rounded-full text-xs font-medium ${getStatusColor(property.status)}`}>
+                {property.status}
+              </span>
+            </div>
+            <div className="md:col-span-2">
+              <h3 className="text-xs font-medium text-slate-400 uppercase tracking-wide mb-1">Description</h3>
+              <p className="text-white">{property.description || 'No description provided'}</p>
+            </div>
           </div>
-        ) : (
-          <div className="space-y-3">
-            {tenants.map((tenant) => (
-              <div key={tenant.id} className="flex items-center justify-between p-4 border border-gray-200 rounded-lg">
-                <div>
-                  <h4 className="font-medium text-slate-900">{tenant.profiles?.full_name || 'Unknown Tenant'}</h4>
-                  <p className="text-sm text-slate-600">{tenant.profiles?.email || 'No email'}</p>
-                  <p className="text-xs text-slate-500 mt-1">
-                    Unit: {tenant.units?.name || 'N/A'} | Move-in: {tenant.move_in_date || 'N/A'}
-                  </p>
+        </div>
+
+        {/* Units Section */}
+        <div className="bg-white/10 backdrop-blur-lg rounded-xl shadow-lg border border-white/20 p-6 mt-6 hover:bg-white/20 transition-all duration-300">
+          <h2 className="text-lg font-semibold text-emerald-400 mb-6">Units</h2>
+          {units.length === 0 ? (
+            <div className="text-center py-8 text-slate-400">
+              <p className="text-sm">No units added to this property yet</p>
+              <Link href="/owner/units/add" className="text-sm text-emerald-400 hover:text-emerald-300 mt-2 inline-block transition-colors">
+                Add your first unit
+              </Link>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {units.map((unit) => (
+                <div key={unit.id} className="flex items-center justify-between p-4 bg-white/5 rounded-xl border border-white/10 hover:bg-white/10 transition-colors">
+                  <div>
+                    <h4 className="font-medium text-white">{unit.name}</h4>
+                    <p className="text-sm text-slate-400">Rent: ₱{unit.monthly_rent.toLocaleString()}/month</p>
+                  </div>
+                  <span className={`px-3 py-1 rounded-full text-xs font-medium ${getStatusColor(unit.status)}`}>
+                    {unit.status}
+                  </span>
                 </div>
-                <span className={`px-2 py-1 rounded-full text-xs ${getStatusColor(tenant.account_status)}`}>
-                  {tenant.account_status}
-                </span>
-              </div>
-            ))}
-          </div>
-        )}
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* Tenants Section */}
+        <div className="bg-white/10 backdrop-blur-lg rounded-xl shadow-lg border border-white/20 p-6 mt-6 hover:bg-white/20 transition-all duration-300">
+          <h2 className="text-lg font-semibold text-emerald-400 mb-6">Assigned Tenants</h2>
+          {tenants.length === 0 ? (
+            <div className="text-center py-8 text-slate-400">
+              <p className="text-sm">No tenants assigned to this property yet</p>
+              <Link href="/owner/tenants/add" className="text-sm text-emerald-400 hover:text-emerald-300 mt-2 inline-block transition-colors">
+                Add your first tenant
+              </Link>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {tenants.map((tenant) => (
+                <div key={tenant.id} className="flex items-center justify-between p-4 bg-white/5 rounded-xl border border-white/10 hover:bg-white/10 transition-colors">
+                  <div>
+                    <h4 className="font-medium text-white">{tenant.profiles?.full_name || 'Unknown Tenant'}</h4>
+                    <p className="text-sm text-slate-400">{tenant.profiles?.email || 'No email'}</p>
+                    <p className="text-xs text-slate-500 mt-1">
+                      Unit: {tenant.units?.name || 'N/A'} | Move-in: {tenant.move_in_date || 'N/A'}
+                    </p>
+                  </div>
+                  <span className={`px-3 py-1 rounded-full text-xs font-medium ${getStatusColor(tenant.account_status)}`}>
+                    {tenant.account_status}
+                  </span>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );

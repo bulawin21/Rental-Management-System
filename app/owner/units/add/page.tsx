@@ -93,140 +93,143 @@ export default function AddUnitPage() {
   };
 
   return (
-    <div className="grid gap-6">
-      {/* Header */}
-      <header>
-        <div className="flex items-center gap-4">
-          <Link 
-            href="/owner/units" 
-            className="text-sm text-[#012a4a] hover:underline"
-          >
-            &larr; Back to Units
-          </Link>
-        </div>
-        <h1 className="text-3xl font-semibold text-[#012a4a] mt-4">Add Unit</h1>
-        {error && (
-          <div className="rounded-lg bg-red-50 border border-red-200 p-4">
-            <p className="text-sm text-red-800">{error}</p>
-          </div>
-        )}
-        <p className="text-slate-600 mt-2">Add a new rental unit to a property.</p>
-      </header>
-
-      {/* Form Card */}
-      <div className="rounded-lg bg-white p-6 shadow-sm border border-gray-100">
-        <form onSubmit={handleSubmit} className="space-y-6">
-          {/* Unit Name / Number */}
-          <div>
-            <label htmlFor="unitName" className="block text-sm font-medium text-slate-700 mb-2">
-              Unit Name / Number
-            </label>
-            <input
-              type="text"
-              id="unitName"
-              name="unitName"
-              value={formData.unitName}
-              onChange={handleInputChange}
-              required
-              className="w-full rounded-md border border-gray-200 p-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#012a4a] focus:border-transparent"
-              placeholder="e.g., Unit 1A, Apt 203, Studio B"
-            />
-          </div>
-
-          {/* Property Dropdown */}
-          <div>
-            <label htmlFor="propertyId" className="block text-sm font-medium text-slate-700 mb-2">
-              Property
-            </label>
-            <select
-              id="propertyId"
-              name="propertyId"
-              value={formData.propertyId}
-              onChange={handleInputChange}
-              required
-              className="w-full rounded-md border border-gray-200 p-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#012a4a] focus:border-transparent"
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
+      <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* Header */}
+        <header className="mb-8">
+          <div className="flex items-center gap-4">
+            <Link 
+              href="/owner/units" 
+              className="text-sm text-blue-400 hover:text-blue-300 transition-colors"
             >
-              <option value="">Select a property</option>
-              {properties.map((property: {id: string, name: string}) => (
-                <option key={property.id} value={property.id}>
-                  {property.name}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          {/* Monthly Rent */}
-          <div>
-            <label htmlFor="monthlyRent" className="block text-sm font-medium text-slate-700 mb-2">
-              Monthly Rent
-            </label>
-            <input
-              type="number"
-              id="monthlyRent"
-              name="monthlyRent"
-              value={formData.monthlyRent}
-              onChange={handleInputChange}
-              required
-              min="0"
-              step="0.01"
-              className="w-full rounded-md border border-gray-200 p-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#012a4a] focus:border-transparent"
-              placeholder="e.g., 1500.00"
-            />
-          </div>
-
-          {/* Status */}
-          <div>
-            <label htmlFor="status" className="block text-sm font-medium text-slate-700 mb-2">
-              Status
-            </label>
-            <select
-              id="status"
-              name="status"
-              value={formData.status}
-              onChange={handleInputChange}
-              required
-              className="w-full rounded-md border border-gray-200 p-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#012a4a] focus:border-transparent"
-            >
-              <option value="vacant">Vacant</option>
-              <option value="occupied">Occupied</option>
-              <option value="maintenance">Under Maintenance</option>
-              <option value="unavailable">Unavailable</option>
-            </select>
-          </div>
-
-          {/* Notes */}
-          <div>
-            <label htmlFor="notes" className="block text-sm font-medium text-slate-700 mb-2">
-              Notes
-            </label>
-            <textarea
-              id="notes"
-              name="notes"
-              value={formData.notes}
-              onChange={handleInputChange}
-              rows={4}
-              className="w-full rounded-md border border-gray-200 p-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#012a4a] focus:border-transparent"
-              placeholder="Additional notes about the unit, features, amenities, etc."
-            />
-          </div>
-
-          {/* Action Buttons */}
-          <div className="flex gap-3 pt-4">
-            <button
-              type="submit"
-              disabled={loading}
-              className="rounded-md bg-[#012a4a] px-6 py-2.5 text-white text-sm hover:bg-[#0a1f35] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {loading ? "Saving..." : "Save Unit"}
-            </button>
-            <Link
-              href="/owner/units"
-              className="rounded-md border border-gray-200 px-6 py-2.5 text-slate-700 text-sm hover:bg-gray-50 transition-colors"
-            >
-              Cancel
+              &larr; Back to Units
             </Link>
           </div>
-        </form>
+          <h1 className="text-4xl font-bold text-white mt-4">Add Unit</h1>
+          <p className="text-slate-300 mt-2 text-lg">Add a new rental unit to a property</p>
+        </header>
+
+        {error && (
+          <div className="bg-red-500/20 border border-red-500/50 rounded-xl p-6 mb-8">
+            <p className="text-sm text-red-200">{error}</p>
+          </div>
+        )}
+
+        {/* Form Card */}
+        <div className="bg-white/10 backdrop-blur-lg rounded-xl shadow-lg border border-white/20 p-8">
+          <form onSubmit={handleSubmit} className="space-y-6">
+            {/* Unit Name / Number */}
+            <div>
+              <label htmlFor="unitName" className="block text-sm font-medium text-slate-300 mb-2">
+                Unit Name / Number
+              </label>
+              <input
+                type="text"
+                id="unitName"
+                name="unitName"
+                value={formData.unitName}
+                onChange={handleInputChange}
+                required
+                className="w-full rounded-xl bg-white/10 border border-white/20 p-3 text-sm text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                placeholder="e.g., Unit 1A, Apt 203, Studio B"
+              />
+            </div>
+
+            {/* Property Dropdown */}
+            <div>
+              <label htmlFor="propertyId" className="block text-sm font-medium text-slate-300 mb-2">
+                Property
+              </label>
+              <select
+                id="propertyId"
+                name="propertyId"
+                value={formData.propertyId}
+                onChange={handleInputChange}
+                required
+                className="w-full rounded-xl bg-white/10 border border-white/20 p-3 text-sm text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+              >
+                <option value="" className="bg-slate-800">Select a property</option>
+                {properties.map((property: {id: string, name: string}) => (
+                  <option key={property.id} value={property.id} className="bg-slate-800">
+                    {property.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {/* Monthly Rent */}
+            <div>
+              <label htmlFor="monthlyRent" className="block text-sm font-medium text-slate-300 mb-2">
+                Monthly Rent
+              </label>
+              <input
+                type="number"
+                id="monthlyRent"
+                name="monthlyRent"
+                value={formData.monthlyRent}
+                onChange={handleInputChange}
+                required
+                min="0"
+                step="0.01"
+                className="w-full rounded-xl bg-white/10 border border-white/20 p-3 text-sm text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                placeholder="e.g., 1500.00"
+              />
+            </div>
+
+            {/* Status */}
+            <div>
+              <label htmlFor="status" className="block text-sm font-medium text-slate-300 mb-2">
+                Status
+              </label>
+              <select
+                id="status"
+                name="status"
+                value={formData.status}
+                onChange={handleInputChange}
+                required
+                className="w-full rounded-xl bg-white/10 border border-white/20 p-3 text-sm text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+              >
+                <option value="vacant" className="bg-slate-800">Vacant</option>
+                <option value="occupied" className="bg-slate-800">Occupied</option>
+                <option value="maintenance" className="bg-slate-800">Under Maintenance</option>
+                <option value="unavailable" className="bg-slate-800">Unavailable</option>
+              </select>
+            </div>
+
+            {/* Notes */}
+            <div>
+              <label htmlFor="notes" className="block text-sm font-medium text-slate-300 mb-2">
+                Notes
+              </label>
+              <textarea
+                id="notes"
+                name="notes"
+                value={formData.notes}
+                onChange={handleInputChange}
+                rows={4}
+                className="w-full rounded-xl bg-white/10 border border-white/20 p-3 text-sm text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                placeholder="Additional notes about the unit, features, amenities, etc."
+              />
+            </div>
+
+            {/* Action Buttons */}
+            <div className="flex gap-3 pt-4">
+              <button
+                type="submit"
+                disabled={loading}
+                className="rounded-xl bg-gradient-to-r from-blue-500 to-blue-600 px-6 py-3 text-white text-sm hover:from-blue-600 hover:to-blue-700 transition-all duration-300 shadow-lg hover:shadow-blue-500/50 font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {loading ? "Saving..." : "Save Unit"}
+              </button>
+              <Link
+                href="/owner/units"
+                className="rounded-xl border border-white/20 px-6 py-3 text-slate-300 text-sm hover:bg-white/10 transition-colors"
+              >
+                Cancel
+              </Link>
+            </div>
+          </form>
+        </div>
       </div>
     </div>
   );
