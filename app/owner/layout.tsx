@@ -13,7 +13,7 @@ export default function OwnerLayout({ children }: { children: React.ReactNode })
 
       {/* Main Content */}
       <main className="flex-1 overflow-y-auto">
-        <div className="p-6">
+        <div className="p-4 lg:p-6 pt-16 lg:pt-6">
           {children}
         </div>
       </main>
