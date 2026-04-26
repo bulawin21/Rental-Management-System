@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { supabase } from "@/lib/supabase";
 
 interface DashboardStats {
@@ -11,6 +11,8 @@ interface DashboardStats {
   totalTenants: number;
   occupancyRate: number;
   monthlyRevenue: number;
+  duePayments: number;
+  overduePayments: number;
 }
 
 interface Activity {
@@ -39,21 +41,28 @@ export default function OwnerDashboard() {
     vacantUnits: 0,
     totalTenants: 0,
     occupancyRate: 0,
-    monthlyRevenue: 0
+    monthlyRevenue: 0,
+    duePayments: 0,
+    overduePayments: 0
   });
   const [recentActivities, setRecentActivities] = useState<Activity[]>([]);
   const [recentPayments, setRecentPayments] = useState<PaymentSubmission[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const isFetching = useRef(false);
 
   // Fetch dashboard statistics
   const fetchDashboardStats = async () => {
+    if (isFetching.current) return;
+    isFetching.current = true;
+    
     setLoading(true);
     setError(null);
 
     try {
-      // Get current user
-      const { data: { user } } = await supabase.auth.getUser();
+      // Get current user using session to avoid lock issues
+      const { data: { session } } = await supabase.auth.getSession();
+      const user = session?.user;
       
       if (!user) {
         throw new Error("User not authenticated");
@@ -132,27 +141,109 @@ export default function OwnerDashboard() {
         vacantUnits,
         totalTenants,
         occupancyRate,
-        monthlyRevenue: 0
+        monthlyRevenue: 0,
+        duePayments: 0,
+        overduePayments: 0
       });
 
       // Calculate monthly revenue from approved payments
-      const now = new Date();
-      const firstDayOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-      const lastDayOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0);
-
-      const { data: approvedPayments } = await supabase
+      const { data: approvedPayments, error: paymentsError } = await supabase
         .from('payments')
-        .select('amount, properties (owner_id)')
-        .eq('properties.owner_id', user.id)
-        .eq('status', 'approved')
-        .gte('payment_date', firstDayOfMonth.toISOString())
-        .lte('payment_date', lastDayOfMonth.toISOString());
+        .select('amount, tenants!inner (units (properties (owner_id)))')
+        .eq('tenants.units.properties.owner_id', user.id)
+        .eq('status', 'approved');
+
+      console.log("Approved payments query:", approvedPayments);
+      if (paymentsError) {
+        console.error("Approved payments error:", paymentsError);
+      }
 
       const monthlyRevenue = approvedPayments?.reduce((sum, payment) => sum + (payment.amount || 0), 0) || 0;
+      console.log("Monthly revenue calculated:", monthlyRevenue);
 
       setStats(prev => ({
         ...prev,
         monthlyRevenue
+      }));
+
+      // Calculate due and overdue payments
+      const now = new Date();
+
+      // Calculate due and overdue payments
+      const { data: tenantsWithPayments } = await supabase
+        .from('tenants')
+        .select(`
+          id,
+          move_in_date,
+          account_status,
+          units (
+            id,
+            properties (owner_id)
+          )
+        `)
+        .eq('units.properties.owner_id', user.id)
+        .eq('account_status', 'active');
+
+      const { data: allPayments } = await supabase
+        .from('payments')
+        .select('tenant_id, payment_date, status')
+        .eq('status', 'approved');
+
+      const currentMonth = now.getMonth();
+      const currentYear = now.getFullYear();
+      let dueCount = 0;
+      let overdueCount = 0;
+
+      if (tenantsWithPayments) {
+        tenantsWithPayments.forEach(tenant => {
+          const moveInDate = new Date(tenant.move_in_date);
+          const dueDay = moveInDate.getDate();
+          
+          // Check if rent is due this month
+          const dueDateThisMonth = new Date(currentYear, currentMonth, dueDay);
+          const isDueThisMonth = now >= dueDateThisMonth;
+
+          // Check if tenant has paid for current month
+          const hasPaidCurrentMonth = allPayments?.some(payment => {
+            const paymentDate = new Date(payment.payment_date);
+            return payment.tenant_id === tenant.id &&
+                   paymentDate.getMonth() === currentMonth &&
+                   paymentDate.getFullYear() === currentYear;
+          }) || false;
+
+          if (isDueThisMonth && !hasPaidCurrentMonth) {
+            dueCount++;
+          }
+
+          // Check for overdue payments (previous months)
+          const monthsSinceMoveIn = (currentYear - moveInDate.getFullYear()) * 12 + (currentMonth - moveInDate.getMonth());
+          
+          for (let i = 0; i < monthsSinceMoveIn; i++) {
+            const checkMonth = (moveInDate.getMonth() + i) % 12;
+            const checkYear = moveInDate.getFullYear() + Math.floor((moveInDate.getMonth() + i) / 12);
+            
+            // Skip current month
+            if (checkYear === currentYear && checkMonth === currentMonth) continue;
+
+            const hasPaidForMonth = allPayments?.some(payment => {
+              const paymentDate = new Date(payment.payment_date);
+              return payment.tenant_id === tenant.id &&
+                     paymentDate.getMonth() === checkMonth &&
+                     paymentDate.getFullYear() === checkYear;
+            }) || false;
+
+            if (!hasPaidForMonth) {
+              overdueCount++;
+              break; // Count each tenant only once for overdue
+            }
+          }
+        });
+      }
+
+      setStats(prev => ({
+        ...prev,
+        duePayments: dueCount,
+        overduePayments: overdueCount
       }));
 
       // Fetch recent activities
@@ -175,7 +266,7 @@ export default function OwnerDashboard() {
       if (recentTenants) {
         recentTenants.forEach(tenant => {
           activities.push({
-            id: tenant.id,
+            id: `tenant-${tenant.id}`,
             type: 'tenant',
             description: `New tenant added: ${tenant.profiles?.full_name || 'Unknown'} to ${tenant.units?.name || 'Unknown'}`,
             timestamp: tenant.created_at
@@ -194,7 +285,7 @@ export default function OwnerDashboard() {
       if (recentProperties) {
         recentProperties.forEach(property => {
           activities.push({
-            id: property.id,
+            id: `property-${property.id}`,
             type: 'property',
             description: `New property added: ${property.name}`,
             timestamp: property.created_at
@@ -213,7 +304,7 @@ export default function OwnerDashboard() {
       if (recentUnits) {
         recentUnits.forEach(unit => {
           activities.push({
-            id: unit.id,
+            id: `unit-${unit.id}`,
             type: 'unit',
             description: `New unit added: ${unit.name} at ${unit.properties?.name || 'Unknown'}`,
             timestamp: unit.created_at
@@ -262,6 +353,7 @@ export default function OwnerDashboard() {
       setError(err.message || "Failed to load dashboard data");
     } finally {
       setLoading(false);
+      isFetching.current = false;
     }
   };
 
@@ -420,7 +512,7 @@ export default function OwnerDashboard() {
             <div className="flex items-center justify-between">
               <div>
                 <h3 className="text-sm font-semibold text-slate-300 uppercase tracking-wider">Due Payments</h3>
-                <p className="mt-3 text-4xl font-bold text-blue-400">0</p>
+                <p className="mt-3 text-4xl font-bold text-blue-400">{stats.duePayments}</p>
                 <p className="text-sm text-slate-400 mt-2">Payments due this month</p>
               </div>
               <div className="w-12 h-12 bg-blue-500/20 rounded-full flex items-center justify-center">
@@ -435,7 +527,7 @@ export default function OwnerDashboard() {
             <div className="flex items-center justify-between">
               <div>
                 <h3 className="text-sm font-semibold text-slate-300 uppercase tracking-wider">Overdue Payments</h3>
-                <p className="mt-3 text-4xl font-bold text-red-400">0</p>
+                <p className="mt-3 text-4xl font-bold text-red-400">{stats.overduePayments}</p>
                 <p className="text-sm text-slate-400 mt-2">Action needed</p>
               </div>
               <div className="w-12 h-12 bg-red-500/20 rounded-full flex items-center justify-center">

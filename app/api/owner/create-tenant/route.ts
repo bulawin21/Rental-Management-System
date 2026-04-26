@@ -11,12 +11,11 @@ export async function POST(req: Request) {
       propertyId,
       unitId,
       moveInDate,
-      dueDay,
       monthlyRent,
       accountStatus,
     } = body;
 
-    if (!fullName || !email || !password || !propertyId || !unitId || !dueDay || !monthlyRent) {
+    if (!fullName || !email || !password || !propertyId || !unitId || !monthlyRent) {
       return NextResponse.json({ error: "Missing required fields." }, { status: 400 });
     }
 
@@ -50,6 +49,12 @@ export async function POST(req: Request) {
         { error: `Profile creation failed: ${profileError.message}` },
         { status: 400 }
       );
+    }
+
+    // Calculate due_day from move_in_date for database compatibility
+    let dueDay = 1; // default
+    if (moveInDate) {
+      dueDay = new Date(moveInDate).getDate();
     }
 
     const { error: tenantError } = await supabaseAdmin.from("tenants").insert({

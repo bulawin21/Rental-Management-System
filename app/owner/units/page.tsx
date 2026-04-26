@@ -137,36 +137,46 @@ export default function UnitsPage() {
             </Link>
           </div>
         ) : (
-          <div className="grid gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
             {units.map((unit) => (
               <div
                 key={unit.id}
                 className="bg-white/10 backdrop-blur-lg rounded-xl shadow-lg border border-white/20 p-6 hover:bg-white/20 transition-all duration-300"
               >
-                <div className="flex justify-between items-start">
-                  <div className="flex-1">
-                    <h3 className="text-lg font-semibold text-white">{unit.name}</h3>
-                    <p className="text-slate-400 mt-1">{unit.properties.name}</p>
-                    {unit.notes && <p className="text-slate-500 text-sm mt-1">{unit.notes}</p>}
+                <div className="flex justify-between items-start mb-4">
+                  <div>
+                    <h3 className="text-xl font-bold text-white">{unit.name}</h3>
+                    <p className="text-slate-400 text-sm mt-1">{unit.properties.name}</p>
                   </div>
-                  <div className="text-right mr-4">
-                    <p className="text-lg font-semibold text-white">₱{unit.monthly_rent.toLocaleString()}</p>
-                    <span className={`inline-block px-2 py-1 text-xs rounded-full mt-2 ${
-                      unit.status === 'occupied' 
-                        ? 'bg-emerald-500/30 text-emerald-300' 
-                        : 'bg-amber-500/30 text-amber-300'
-                    }`}>
-                      {unit.status}
-                    </span>
-                  </div>
-                  <button
-                    onClick={() => handleDelete(unit.id)}
-                    disabled={deletingId === unit.id}
-                    className="px-4 py-2 text-sm text-red-400 hover:bg-red-500/20 rounded-lg transition-colors disabled:opacity-50"
-                  >
-                    {deletingId === unit.id ? "Deleting..." : "Delete"}
-                  </button>
+                  <span className={`inline-flex px-3 py-1 text-xs font-medium rounded-full ${
+                    unit.status === 'occupied' 
+                      ? 'bg-emerald-500/30 text-emerald-300' 
+                      : 'bg-amber-500/30 text-amber-300'
+                  }`}>
+                    {unit.status}
+                  </span>
                 </div>
+                
+                <div className="space-y-3 mb-4">
+                  <div>
+                    <p className="text-xs font-medium text-slate-400 uppercase tracking-wide">Monthly Rent</p>
+                    <p className="text-2xl font-bold text-white mt-1">₱{unit.monthly_rent.toLocaleString()}</p>
+                  </div>
+                  {unit.notes && (
+                    <div>
+                      <p className="text-xs font-medium text-slate-400 uppercase tracking-wide">Notes</p>
+                      <p className="text-sm text-slate-300 mt-1">{unit.notes}</p>
+                    </div>
+                  )}
+                </div>
+
+                <button
+                  onClick={() => handleDelete(unit.id)}
+                  disabled={deletingId === unit.id}
+                  className="w-full px-4 py-2 text-sm text-red-400 hover:bg-red-500/20 rounded-lg transition-colors disabled:opacity-50 border border-red-500/30 hover:border-red-500/50"
+                >
+                  {deletingId === unit.id ? "Deleting..." : "Delete Unit"}
+                </button>
               </div>
             ))}
           </div>

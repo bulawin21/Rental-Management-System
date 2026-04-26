@@ -36,6 +36,10 @@ interface Tenant {
   units: {
     name: string;
   };
+  profiles: {
+    full_name: string;
+    email: string;
+  };
 }
 
 export default function PropertyDetailsPage() {
@@ -95,6 +99,24 @@ export default function PropertyDetailsPage() {
   // Fetch tenants assigned to units under this property
   const fetchTenants = async () => {
     try {
+      // First get all unit IDs for this property
+      const { data: unitsData, error: unitsError } = await supabase
+        .from('units')
+        .select('id')
+        .eq('property_id', propertyId);
+
+      if (unitsError) {
+        console.error("Units fetch error:", unitsError);
+        throw unitsError;
+      }
+
+      if (!unitsData || unitsData.length === 0) {
+        return [];
+      }
+
+      const unitIds = unitsData.map(u => u.id);
+
+      // Then get tenants assigned to these units
       const { data, error: fetchError } = await supabase
         .from('tenants')
         .select(`
@@ -108,7 +130,7 @@ export default function PropertyDetailsPage() {
             email
           )
         `)
-        .eq('units.property_id', propertyId)
+        .in('unit_id', unitIds)
         .order('move_in_date', { ascending: false });
 
       if (fetchError) {

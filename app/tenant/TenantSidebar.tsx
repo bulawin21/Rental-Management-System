@@ -93,6 +93,12 @@ export default function TenantSidebar() {
           >
             Messages
           </Link>
+          <Link
+            href="/tenant/contact"
+            className="block px-4 py-3 rounded-lg text-sm text-slate-600 hover:bg-gray-100 hover:text-slate-900 transition-colors"
+          >
+            Contact
+          </Link>
         </nav>
       </div>
 

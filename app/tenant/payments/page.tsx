@@ -8,7 +8,8 @@ interface TenantData {
   profile_id: string;
   property_id: string;
   unit_id: string;
-  due_day: number;
+  move_in_date: string | null;
+  last_payment_date: string | null;
   monthly_rent: number;
   account_status: string;
 }
@@ -34,6 +35,30 @@ export default function TenantPayments() {
   const [submittingPayment, setSubmittingPayment] = useState(false);
   const [paymentError, setPaymentError] = useState<string | null>(null);
   const [paymentSuccess, setPaymentSuccess] = useState<string | null>(null);
+
+  // Calculate next payment due date from last payment date or move-in date
+  const getNextDueDate = (moveInDate: string | null, lastPaymentDate: string | null): { date: Date; isOverdue: boolean; daysUntilDue: number } | null => {
+    const baseDate = lastPaymentDate || moveInDate;
+    if (!baseDate) return null;
+
+    const base = new Date(baseDate);
+    const now = new Date();
+    
+    // Calculate next due date based on the base date (last payment or move-in)
+    // JavaScript automatically handles edge cases (e.g., Jan 31 → Feb 28/29)
+    let nextDueDate = new Date(base);
+    nextDueDate.setMonth(nextDueDate.getMonth() + 1);
+    
+    // If the calculated due date has already passed, add another month
+    if (now > nextDueDate) {
+      nextDueDate.setMonth(nextDueDate.getMonth() + 1);
+    }
+    
+    const daysUntilDue = Math.ceil((nextDueDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+    const isOverdue = daysUntilDue < 0;
+    
+    return { date: nextDueDate, isOverdue, daysUntilDue };
+  };
 
   // Load tenant data on mount
   useEffect(() => {
@@ -226,23 +251,75 @@ export default function TenantPayments() {
             <p className="text-sm text-slate-400 mt-2">Contact your property manager for more information.</p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {/* Payment Summary */}
-            <div className="bg-white/10 backdrop-blur-lg rounded-xl shadow-lg border border-white/20 p-6 hover:bg-white/20 transition-all duration-300">
-              <h2 className="text-lg font-semibold text-emerald-400 mb-6">Payment Summary</h2>
-              <div className="space-y-5">
-                <div>
-                  <h3 className="text-xs font-medium text-slate-400 uppercase tracking-wide mb-1">Monthly Rent</h3>
+          <div className="space-y-6">
+            {/* Payment Summary Card */}
+            <div className="bg-white/10 backdrop-blur-lg rounded-xl shadow-lg border border-white/20 p-8 hover:bg-white/20 transition-all duration-300">
+              <div className="flex items-center justify-between mb-6">
+                <h2 className="text-2xl font-bold text-white">Payment Summary</h2>
+                <button
+                  onClick={() => setShowPaymentForm(true)}
+                  className="rounded-xl bg-gradient-to-r from-emerald-500 to-emerald-600 px-6 py-3 text-white font-medium hover:from-emerald-600 hover:to-emerald-700 transition-all duration-300 shadow-lg hover:shadow-emerald-500/50"
+                >
+                  Submit Payment
+                </button>
+              </div>
+              
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div className="bg-white/5 rounded-xl p-6 border border-white/10">
+                  <div className="flex items-center gap-3 mb-3">
+                    <div className="w-10 h-10 bg-emerald-500/20 rounded-lg flex items-center justify-center">
+                      <svg className="w-5 h-5 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      </svg>
+                    </div>
+                    <h3 className="text-sm font-medium text-slate-400 uppercase tracking-wide">Monthly Rent</h3>
+                  </div>
                   <p className="text-3xl font-bold text-white">
                     ₱{tenantData.monthly_rent?.toFixed(2) || "Loading..."}
                   </p>
-                  <p className="text-sm text-slate-400 mt-2">
-                    Due on day {tenantData.due_day || "Loading..."} of each month
-                  </p>
                 </div>
-                <div className="flex items-center gap-3">
-                  <h3 className="text-xs font-medium text-slate-400 uppercase tracking-wide">Account Status</h3>
-                  <span className={`inline-flex px-3 py-1 text-xs font-medium rounded-full ${
+
+                <div className="bg-white/5 rounded-xl p-6 border border-white/10">
+                  <div className="flex items-center gap-3 mb-3">
+                    <div className="w-10 h-10 bg-purple-500/20 rounded-lg flex items-center justify-center">
+                      <svg className="w-5 h-5 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                      </svg>
+                    </div>
+                    <h3 className="text-sm font-medium text-slate-400 uppercase tracking-wide">Next Due Date</h3>
+                  </div>
+                  {(() => {
+                    const nextDueInfo = tenantData?.move_in_date ? getNextDueDate(tenantData.move_in_date, tenantData.last_payment_date) : null;
+                    if (!nextDueInfo) return <p className="text-lg text-slate-400">Move-in date not set</p>;
+                    return (
+                      <p className={`text-lg font-semibold ${
+                        nextDueInfo.isOverdue 
+                          ? 'text-red-400' 
+                          : nextDueInfo.daysUntilDue <= 3
+                          ? 'text-amber-400'
+                          : 'text-white'
+                      }`}>
+                        {nextDueInfo.isOverdue 
+                          ? `Overdue by ${Math.abs(nextDueInfo.daysUntilDue)} days (Due - ${nextDueInfo.date.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })})` 
+                          : nextDueInfo.daysUntilDue === 0
+                          ? 'Due today'
+                          : `Due - ${nextDueInfo.date.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}`
+                        }
+                      </p>
+                    );
+                  })()}
+                </div>
+
+                <div className="bg-white/5 rounded-xl p-6 border border-white/10">
+                  <div className="flex items-center gap-3 mb-3">
+                    <div className="w-10 h-10 bg-blue-500/20 rounded-lg flex items-center justify-center">
+                      <svg className="w-5 h-5 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      </svg>
+                    </div>
+                    <h3 className="text-sm font-medium text-slate-400 uppercase tracking-wide">Account Status</h3>
+                  </div>
+                  <span className={`inline-flex px-4 py-2 text-sm font-medium rounded-full ${
                     tenantData.account_status === 'active' 
                       ? 'bg-emerald-500/30 text-emerald-300' 
                       : 'bg-white/10 text-slate-300'
@@ -253,36 +330,50 @@ export default function TenantPayments() {
               </div>
             </div>
 
-            {/* Payment Records */}
-            <div className="bg-white/10 backdrop-blur-lg rounded-xl shadow-lg border border-white/20 p-6 hover:bg-white/20 transition-all duration-300">
-              <div className="flex items-center justify-between mb-6">
-                <h2 className="text-lg font-semibold text-emerald-400">Payment Records</h2>
-                <button
-                  onClick={() => setShowPaymentForm(true)}
-                  className="rounded-xl bg-gradient-to-r from-emerald-500 to-emerald-600 px-4 py-2 text-white text-sm hover:from-emerald-600 hover:to-emerald-700 transition-all duration-300 shadow-lg hover:shadow-emerald-500/50 font-medium"
-                >
-                  Submit Payment
-                </button>
-              </div>
-              <div className="space-y-3">
-                {payments.length === 0 ? (
-                  <div className="flex items-center justify-between p-4 bg-white/5 rounded-xl border border-white/10">
-                    <div>
-                      <p className="text-sm font-medium text-white">Payment Records</p>
-                      <p className="text-xs text-slate-400 mt-1">No payment record yet</p>
-                    </div>
-                    <span className="px-3 py-1 bg-slate-600 text-white text-xs rounded-full">No Data</span>
+            {/* Payment Records Card */}
+            <div className="bg-white/10 backdrop-blur-lg rounded-xl shadow-lg border border-white/20 p-8 hover:bg-white/20 transition-all duration-300">
+              <h2 className="text-2xl font-bold text-white mb-6">Payment History</h2>
+              
+              {payments.length === 0 ? (
+                <div className="text-center py-12">
+                  <div className="w-16 h-16 bg-white/10 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <svg className="w-8 h-8 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                    </svg>
                   </div>
-                ) : (
-                  payments.map((payment) => (
-                    <div key={payment.id} className="flex items-center justify-between p-4 bg-white/5 rounded-xl border border-white/10 hover:bg-white/10 transition-colors">
-                      <div>
-                        <p className="text-base font-semibold text-white">₱{payment.amount?.toFixed(2)}</p>
-                        <p className="text-xs text-slate-400 mt-1">
-                          {payment.payment_method} • {new Date(payment.payment_date).toLocaleDateString()}
-                        </p>
+                  <p className="text-slate-300 mb-2">No payment records yet</p>
+                  <p className="text-sm text-slate-400">Submit your first payment to see your history here</p>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {payments.map((payment) => (
+                    <div key={payment.id} className="flex items-center justify-between p-5 bg-white/5 rounded-xl border border-white/10 hover:bg-white/10 transition-colors">
+                      <div className="flex items-center gap-4">
+                        <div className={`w-12 h-12 rounded-lg flex items-center justify-center ${
+                          payment.status === 'approved'
+                            ? 'bg-emerald-500/20'
+                            : payment.status === 'rejected'
+                            ? 'bg-red-500/20'
+                            : 'bg-amber-500/20'
+                        }`}>
+                          <svg className={`w-6 h-6 ${
+                            payment.status === 'approved'
+                              ? 'text-emerald-400'
+                              : payment.status === 'rejected'
+                              ? 'text-red-400'
+                              : 'text-amber-400'
+                          }`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                          </svg>
+                        </div>
+                        <div>
+                          <p className="text-lg font-semibold text-white">₱{payment.amount?.toFixed(2)}</p>
+                          <p className="text-sm text-slate-400 mt-1">
+                            {payment.payment_method} • {new Date(payment.payment_date).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
+                          </p>
+                        </div>
                       </div>
-                      <span className={`px-3 py-1 text-xs rounded-full font-medium ${
+                      <span className={`px-4 py-2 text-sm font-medium rounded-full ${
                         payment.status === 'approved'
                           ? 'bg-emerald-500/30 text-emerald-300'
                           : payment.status === 'rejected'
@@ -292,9 +383,9 @@ export default function TenantPayments() {
                         {payment.status.charAt(0).toUpperCase() + payment.status.slice(1)}
                       </span>
                     </div>
-                  ))
-                )}
-              </div>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
         )}

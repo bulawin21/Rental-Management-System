@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+import Link from "next/link";
 import { supabase } from "@/lib/supabase";
 
 interface Message {
@@ -141,21 +142,27 @@ export default function MessagesPage() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* Header */}
         <header className="mb-8">
           <h1 className="text-4xl font-bold text-white">Messages</h1>
           <p className="text-slate-300 mt-2 text-lg">Communicate with your tenants</p>
         </header>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 h-[500px]">
+        {/* Main Content */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 h-[calc(100vh-200px)]">
           {/* Tenant List */}
-          <div className="lg:col-span-1 bg-white/10 backdrop-blur-lg rounded-xl shadow-lg border border-white/20 flex flex-col">
-            <div className="p-4 border-b border-white/10">
-              <h2 className="font-medium text-white">Tenants</h2>
+          <div className="lg:col-span-1 bg-white/10 backdrop-blur-lg rounded-xl shadow-lg border border-white/20 flex flex-col hover:bg-white/20 transition-all duration-300">
+            <div className="p-5 border-b border-white/10">
+              <h2 className="text-lg font-semibold text-emerald-400">Tenants</h2>
+              <p className="text-xs text-slate-400 mt-1">Select a tenant to view messages</p>
             </div>
             <div className="flex-1 overflow-y-auto">
               {tenants.length === 0 ? (
-                <div className="p-4 text-center text-slate-400">
+                <div className="p-8 text-center text-slate-400">
                   <p className="text-sm">No tenants found</p>
+                  <Link href="/owner/tenants/add" className="text-xs text-emerald-400 hover:text-emerald-300 mt-2 inline-block transition-colors">
+                    Add your first tenant
+                  </Link>
                 </div>
               ) : (
                 <div className="divide-y divide-white/10">
@@ -163,18 +170,25 @@ export default function MessagesPage() {
                     <button
                       key={tenant.id}
                       onClick={() => setSelectedTenant(tenant)}
-                      className={`w-full p-4 text-left hover:bg-white/10 transition-colors ${
-                        selectedTenant?.id === tenant.id ? 'bg-blue-500/20' : ''
+                      className={`w-full p-4 text-left hover:bg-white/10 transition-all duration-200 ${
+                        selectedTenant?.id === tenant.id ? 'bg-blue-500/20 border-l-4 border-blue-500' : ''
                       }`}
                     >
-                      <div className="font-medium text-white">
-                        {tenant.profiles?.full_name || 'Unknown Tenant'}
-                      </div>
-                      <div className="text-xs text-slate-400 mt-1">
-                        {Array.isArray(tenant.units) 
-                          ? `${tenant.units[0]?.name || 'Unknown Unit'} - ${tenant.units[0]?.properties?.name || 'Unknown Property'}`
-                          : `${tenant.units?.name || 'Unknown Unit'} - ${tenant.units?.properties?.name || 'Unknown Property'}`
-                        }
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center text-white font-semibold text-lg">
+                          {tenant.profiles?.full_name?.charAt(0).toUpperCase() || 'T'}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="font-medium text-white truncate">
+                            {tenant.profiles?.full_name || 'Unknown Tenant'}
+                          </div>
+                          <div className="text-xs text-slate-400 mt-1 truncate">
+                            {Array.isArray(tenant.units) 
+                              ? `${tenant.units[0]?.name || 'Unknown Unit'} • ${tenant.units[0]?.properties?.name || 'Unknown Property'}`
+                              : `${tenant.units?.name || 'Unknown Unit'} • ${tenant.units?.properties?.name || 'Unknown Property'}`
+                            }
+                          </div>
+                        </div>
                       </div>
                     </button>
                   ))}
@@ -184,34 +198,52 @@ export default function MessagesPage() {
           </div>
 
           {/* Chat Panel */}
-          <div className="lg:col-span-2 bg-white/10 backdrop-blur-lg rounded-xl shadow-lg border border-white/20 flex flex-col">
+          <div className="lg:col-span-2 bg-white/10 backdrop-blur-lg rounded-xl shadow-lg border border-white/20 flex flex-col hover:bg-white/20 transition-all duration-300">
             {!selectedTenant ? (
-              <div className="flex-1 flex items-center justify-center text-slate-400">
+              <div className="flex-1 flex flex-col items-center justify-center text-slate-400">
+                <div className="w-16 h-16 rounded-full bg-white/10 flex items-center justify-center mb-4">
+                  <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                  </svg>
+                </div>
                 <p className="text-sm">Select a tenant to start messaging</p>
               </div>
             ) : (
               <>
                 {/* Chat Header */}
-                <div className="p-4 border-b border-white/10">
-                  <div className="font-medium text-white">
-                    {selectedTenant.profiles?.full_name || 'Unknown Tenant'}
-                  </div>
-                  <div className="text-xs text-slate-400">
-                    {Array.isArray(selectedTenant.units) 
-                      ? `${selectedTenant.units[0]?.name || 'Unknown Unit'} - ${selectedTenant.units[0]?.properties?.name || 'Unknown Property'}`
-                      : `${selectedTenant.units?.name || 'Unknown Unit'} - ${selectedTenant.units?.properties?.name || 'Unknown Property'}`
-                    }
+                <div className="p-5 border-b border-white/10">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center text-white font-semibold text-lg">
+                      {selectedTenant.profiles?.full_name?.charAt(0).toUpperCase() || 'T'}
+                    </div>
+                    <div>
+                      <div className="font-medium text-white">
+                        {selectedTenant.profiles?.full_name || 'Unknown Tenant'}
+                      </div>
+                      <div className="text-xs text-slate-400">
+                        {Array.isArray(selectedTenant.units) 
+                          ? `${selectedTenant.units[0]?.name || 'Unknown Unit'} • ${selectedTenant.units[0]?.properties?.name || 'Unknown Property'}`
+                          : `${selectedTenant.units?.name || 'Unknown Unit'} • ${selectedTenant.units?.properties?.name || 'Unknown Property'}`
+                        }
+                      </div>
+                    </div>
                   </div>
                 </div>
 
                 {/* Chat Messages */}
-                <div className="flex-1 overflow-y-auto p-4 bg-white/5">
+                <div className="flex-1 overflow-y-auto p-5 bg-white/5 space-y-4">
                   {loading ? (
                     <div className="text-center text-slate-400">
+                      <div className="inline-block animate-spin rounded-full h-6 w-6 border-b-2 border-white mb-2"></div>
                       <p className="text-sm">Loading messages...</p>
                     </div>
                   ) : messages.length === 0 ? (
                     <div className="text-center text-slate-400">
+                      <div className="w-12 h-12 rounded-full bg-white/10 flex items-center justify-center mx-auto mb-3">
+                        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                        </svg>
+                      </div>
                       <p className="text-sm">No messages yet</p>
                       <p className="text-xs mt-2">Start the conversation with a message</p>
                     </div>
@@ -220,7 +252,9 @@ export default function MessagesPage() {
                       {messages.map((message) => {
                         const isOwnMessage = message.sender_role === 'owner';
                         const alignment = isOwnMessage ? 'justify-end' : 'justify-start';
-                        const bubbleStyle = isOwnMessage ? 'bg-blue-500 text-white' : 'bg-white/10 text-white';
+                        const bubbleStyle = isOwnMessage 
+                          ? 'bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-br-sm' 
+                          : 'bg-white/10 text-white rounded-bl-sm';
                         
                         return (
                           <div
@@ -228,11 +262,16 @@ export default function MessagesPage() {
                             className={`flex ${alignment}`}
                           >
                             <div
-                              className={`max-w-xs rounded-xl px-4 py-2 text-sm ${bubbleStyle}`}
+                              className={`max-w-md rounded-2xl px-4 py-3 text-sm ${bubbleStyle}`}
                             >
-                              <div>{message.message}</div>
-                              <div className="text-xs mt-1 opacity-70">
-                                {new Date(message.created_at).toLocaleString()}
+                              <div className="break-words">{message.message}</div>
+                              <div className={`text-xs mt-2 ${isOwnMessage ? 'text-blue-100' : 'text-slate-400'}`}>
+                                {new Date(message.created_at).toLocaleString([], {
+                                  hour: '2-digit',
+                                  minute: '2-digit',
+                                  month: 'short',
+                                  day: 'numeric'
+                                })}
                               </div>
                             </div>
                           </div>
@@ -243,19 +282,19 @@ export default function MessagesPage() {
                 </div>
 
                 {/* Chat Input */}
-                <div className="p-4 border-t border-white/10">
+                <div className="p-5 border-t border-white/10">
                   {error && (
-                    <div className="mb-2 p-2 bg-red-500/20 border border-red-500/50 rounded-lg">
+                    <div className="mb-3 p-3 bg-red-500/20 border border-red-500/50 rounded-xl">
                       <p className="text-sm text-red-200">{error}</p>
                     </div>
                   )}
-                  <div className="flex gap-2">
+                  <div className="flex gap-3">
                     <input
                       type="text"
                       value={messageInput}
                       onChange={(e) => setMessageInput(e.target.value)}
                       placeholder="Type your message..."
-                      className="flex-1 rounded-xl bg-white/10 border border-white/20 p-3 text-sm text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                      className="flex-1 rounded-xl bg-white/10 border border-white/20 p-4 text-sm text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
                       onKeyPress={(e) => {
                         if (e.key === 'Enter') {
                           handleSendMessage();
@@ -265,7 +304,7 @@ export default function MessagesPage() {
                     <button 
                       onClick={handleSendMessage}
                       disabled={!messageInput.trim()}
-                      className="rounded-xl bg-gradient-to-r from-blue-500 to-blue-600 px-6 py-3 text-white text-sm hover:from-blue-600 hover:to-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 shadow-lg hover:shadow-blue-500/50 font-medium"
+                      className="rounded-xl bg-gradient-to-r from-blue-500 to-blue-600 px-8 py-4 text-white text-sm hover:from-blue-600 hover:to-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 shadow-lg hover:shadow-blue-500/50 font-medium"
                     >
                       Send
                     </button>

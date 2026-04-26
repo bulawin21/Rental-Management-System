@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+import Link from "next/link";
 import { supabase } from "@/lib/supabase";
 
 interface TenantData {
@@ -240,7 +241,7 @@ export default function MyUnit() {
                 </div>
                 <div>
                   <h3 className="text-xs font-medium text-slate-400 uppercase tracking-wide mb-2">Emergency Contact</h3>
-                  <p className="text-white text-sm">For urgent maintenance issues, contact emergency services.</p>
+                  <p className="text-white text-sm">For urgent maintenance issues, <Link href="/tenant/contact" className="text-emerald-400 hover:text-emerald-300 transition-colors">contact us</Link>.</p>
                 </div>
                 <div>
                   <h3 className="text-xs font-medium text-slate-400 uppercase tracking-wide mb-2">Community Guidelines</h3>

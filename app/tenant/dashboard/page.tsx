@@ -9,7 +9,7 @@ interface TenantData {
   property_id: string;
   unit_id: string;
   move_in_date: string | null;
-  due_day: number;
+  last_payment_date: string | null;
   monthly_rent: number;
   account_status: string;
 }
@@ -43,6 +43,32 @@ export default function TenantDashboard() {
   const [payments, setPayments] = useState<Payment[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+
+  // Calculate next payment due date from last payment date or move-in date
+  const getNextDueDate = (moveInDate: string | null, lastPaymentDate: string | null): { date: Date; isOverdue: boolean; daysUntilDue: number } | null => {
+    const baseDate = lastPaymentDate || moveInDate;
+    if (!baseDate) return null;
+
+    const base = new Date(baseDate);
+    const now = new Date();
+    
+    // Calculate next due date based on the base date (last payment or move-in)
+    // JavaScript automatically handles edge cases (e.g., Jan 31 → Feb 28/29)
+    let nextDueDate = new Date(base);
+    nextDueDate.setMonth(nextDueDate.getMonth() + 1);
+    
+    // If the calculated due date has already passed, add another month
+    if (now > nextDueDate) {
+      nextDueDate.setMonth(nextDueDate.getMonth() + 1);
+    }
+    
+    const daysUntilDue = Math.ceil((nextDueDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+    const isOverdue = daysUntilDue < 0;
+    
+    return { date: nextDueDate, isOverdue, daysUntilDue };
+  };
+
+  const nextDueInfo = tenantData?.move_in_date ? getNextDueDate(tenantData.move_in_date, tenantData.last_payment_date) : null;
 
   // Load tenant data on mount
   useEffect(() => {
@@ -89,6 +115,8 @@ export default function TenantDashboard() {
 
       const tenantRow = tenantRows[0];
       console.log("Selected tenant row:", tenantRow);
+      console.log("Tenant last_payment_date:", tenantRow.last_payment_date);
+      console.log("Tenant move_in_date:", tenantRow.move_in_date);
 
       // Load related property
       const { data: propertyRow, error: propertyError } = await supabase
@@ -226,9 +254,24 @@ export default function TenantDashboard() {
                   <p className="mt-3 text-2xl font-bold text-white">
                     ₱{tenantData.monthly_rent?.toFixed(2) || "Loading..."}
                   </p>
-                  <p className="text-sm text-slate-400 mt-2">
-                    Due on day {tenantData.due_day || "Loading..."} of each month
-                  </p>
+                  {nextDueInfo ? (
+                    <p className={`text-sm mt-2 ${
+                      nextDueInfo.isOverdue 
+                        ? 'text-red-400' 
+                        : nextDueInfo.daysUntilDue <= 3
+                        ? 'text-amber-400'
+                        : 'text-slate-400'
+                    }`}>
+                      {nextDueInfo.isOverdue 
+                        ? `Overdue by ${Math.abs(nextDueInfo.daysUntilDue)} days (Due - ${nextDueInfo.date.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })})` 
+                        : nextDueInfo.daysUntilDue === 0
+                        ? 'Due today'
+                        : `Due - ${nextDueInfo.date.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}`
+                      }
+                    </p>
+                  ) : (
+                    <p className="text-sm text-slate-400 mt-2">Move-in date not set</p>
+                  )}
                 </div>
                 <div className="w-12 h-12 bg-purple-500/20 rounded-full flex items-center justify-center">
                   <svg className="w-6 h-6 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -263,7 +306,7 @@ export default function TenantDashboard() {
         )}
 
         {/* Payment Status Section */}
-        <div className="bg-white/10 backdrop-blur-lg rounded-xl shadow-lg border border-white/20 p-6">
+        <div className="bg-white/10 backdrop-blur-lg rounded-xl shadow-lg border border-white/20 p-6 mb-8">
           <div className="flex items-center justify-between mb-6">
             <h2 className="text-xl font-bold text-white">Payment Status</h2>
             <span className="text-sm text-slate-400">Your payment history</span>
@@ -300,6 +343,68 @@ export default function TenantDashboard() {
                 ))}
               </div>
             )}
+          </div>
+        </div>
+
+        {/* Community Guidelines Section */}
+        <div className="bg-white/10 backdrop-blur-lg rounded-xl shadow-lg border border-white/20 p-6">
+          <div className="flex items-center justify-between mb-6">
+            <h2 className="text-xl font-bold text-white">Community Guidelines</h2>
+            <span className="text-sm text-slate-400">Rules and expectations</span>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="p-4 bg-white/5 rounded-xl border border-white/10">
+              <div className="flex items-start gap-3">
+                <div className="w-8 h-8 bg-emerald-500/20 rounded-lg flex items-center justify-center flex-shrink-0">
+                  <svg className="w-4 h-4 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                </div>
+                <div>
+                  <h3 className="text-sm font-semibold text-white mb-1">Pay Rent on Time</h3>
+                  <p className="text-xs text-slate-400">Submit your monthly rent payment before the due date to avoid late fees.</p>
+                </div>
+              </div>
+            </div>
+            <div className="p-4 bg-white/5 rounded-xl border border-white/10">
+              <div className="flex items-start gap-3">
+                <div className="w-8 h-8 bg-blue-500/20 rounded-lg flex items-center justify-center flex-shrink-0">
+                  <svg className="w-4 h-4 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+                  </svg>
+                </div>
+                <div>
+                  <h3 className="text-sm font-semibold text-white mb-1">Keep Unit Clean</h3>
+                  <p className="text-xs text-slate-400">Maintain cleanliness and proper condition of your rental unit.</p>
+                </div>
+              </div>
+            </div>
+            <div className="p-4 bg-white/5 rounded-xl border border-white/10">
+              <div className="flex items-start gap-3">
+                <div className="w-8 h-8 bg-purple-500/20 rounded-lg flex items-center justify-center flex-shrink-0">
+                  <svg className="w-4 h-4 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                  </svg>
+                </div>
+                <div>
+                  <h3 className="text-sm font-semibold text-white mb-1">Respect Neighbors</h3>
+                  <p className="text-xs text-slate-400">Be considerate of other tenants and keep noise levels reasonable.</p>
+                </div>
+              </div>
+            </div>
+            <div className="p-4 bg-white/5 rounded-xl border border-white/10">
+              <div className="flex items-start gap-3">
+                <div className="w-8 h-8 bg-amber-500/20 rounded-lg flex items-center justify-center flex-shrink-0">
+                  <svg className="w-4 h-4 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                  </svg>
+                </div>
+                <div>
+                  <h3 className="text-sm font-semibold text-white mb-1">Report Issues</h3>
+                  <p className="text-xs text-slate-400">Report maintenance issues promptly through the Contact page.</p>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </div>

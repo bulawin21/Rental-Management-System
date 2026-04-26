@@ -24,13 +24,12 @@ export default function AddTenant() {
   const [propertyId, setPropertyId] = useState("");
   const [unitId, setUnitId] = useState("");
   const [moveInDate, setMoveInDate] = useState("");
-  const [dueDay, setDueDay] = useState("1");
   const [monthlyRent, setMonthlyRent] = useState("");
   const [accountStatus, setAccountStatus] = useState("active");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [loadingData, setLoadingData] = useState(true);
-  
+
   const [properties, setProperties] = useState<Property[]>([]);
   const [units, setUnits] = useState<Unit[]>([]);
   const [filteredUnits, setFilteredUnits] = useState<Unit[]>([]);
@@ -40,7 +39,7 @@ export default function AddTenant() {
     const loadData = async () => {
       try {
         setLoadingData(true);
-        
+
         // Load properties
         const { data: propsData, error: propsError } = await supabase
           .from("properties")
@@ -106,7 +105,6 @@ export default function AddTenant() {
           propertyId,
           unitId,
           moveInDate: moveInDate || null,
-          dueDay: parseInt(dueDay),
           monthlyRent: parseFloat(monthlyRent),
           accountStatus,
         }),
@@ -132,6 +130,17 @@ export default function AddTenant() {
   const selectedProperty = properties.find((p) => p.id === propertyId);
   const selectedUnit = units.find((u) => u.id === unitId);
 
+  // Helper function to get ordinal suffix (1st, 2nd, 3rd, 4th, etc.)
+  const getOrdinalSuffix = (day: number): string => {
+    if (day > 3 && day < 21) return 'th';
+    switch (day % 10) {
+      case 1: return 'st';
+      case 2: return 'nd';
+      case 3: return 'rd';
+      default: return 'th';
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
       <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -156,125 +165,116 @@ export default function AddTenant() {
             </div>
           ) : (
             <form onSubmit={handleSubmit} className="space-y-6">
-            {/* Tenant Information */}
-            <div className="border-b border-white/10 pb-6">
-              <h2 className="text-sm font-semibold text-slate-300 mb-4">Tenant Information</h2>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm text-slate-400">Full Name</label>
-                  <input
-                    type="text"
-                    value={fullName}
-                    onChange={(e) => setFullName(e.target.value)}
-                    className="mt-1 w-full rounded-xl bg-white/10 border border-white/20 p-3 text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-                    placeholder="Jane Doe"
-                    disabled={loading}
-                    required
-                  />
+              {/* Tenant Information */}
+              <div className="border-b border-white/10 pb-6">
+                <h2 className="text-sm font-semibold text-slate-300 mb-4">Tenant Information</h2>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm text-slate-400">Full Name</label>
+                    <input
+                      type="text"
+                      value={fullName}
+                      onChange={(e) => setFullName(e.target.value)}
+                      className="mt-1 w-full rounded-xl bg-white/10 border border-white/20 p-3 text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                      placeholder="Jane Doe"
+                      disabled={loading}
+                      required
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm text-slate-400">Email</label>
+                    <input
+                      type="email"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      className="mt-1 w-full rounded-xl bg-white/10 border border-white/20 p-3 text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                      placeholder="jane@example.com"
+                      disabled={loading}
+                      required
+                    />
+                  </div>
                 </div>
-                <div>
-                  <label className="block text-sm text-slate-400">Email</label>
+                <div className="mt-4">
+                  <label className="block text-sm text-slate-400">Password</label>
                   <input
-                    type="email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
+                    type="password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
                     className="mt-1 w-full rounded-xl bg-white/10 border border-white/20 p-3 text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-                    placeholder="jane@example.com"
+                    placeholder="Secure password"
                     disabled={loading}
                     required
                   />
                 </div>
               </div>
-              <div className="mt-4">
-                <label className="block text-sm text-slate-400">Password</label>
-                <input
-                  type="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  className="mt-1 w-full rounded-xl bg-white/10 border border-white/20 p-3 text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-                  placeholder="Secure password"
-                  disabled={loading}
-                  required
-                />
-              </div>
-            </div>
 
-            {/* Property & Unit Assignment */}
-            <div className="border-b border-white/10 pb-6">
-              <h2 className="text-sm font-semibold text-slate-300 mb-4">Property & Unit</h2>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm text-slate-400">Property</label>
-                  <select
-                    value={propertyId}
-                    onChange={(e) => setPropertyId(e.target.value)}
+              {/* Property & Unit Assignment */}
+              <div className="border-b border-white/10 pb-6">
+                <h2 className="text-sm font-semibold text-slate-300 mb-4">Property & Unit</h2>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm text-slate-400">Property</label>
+                    <select
+                      value={propertyId}
+                      onChange={(e) => setPropertyId(e.target.value)}
+                      className="mt-1 w-full rounded-xl bg-white/10 border border-white/20 p-3 text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                      disabled={loading}
+                      required
+                    >
+                      <option value="" className="bg-slate-800">Select a property</option>
+                      {properties.map((prop) => (
+                        <option key={prop.id} value={prop.id} className="bg-slate-800">
+                          {prop.name}
+                        </option>
+                      ))}
+                    </select>
+                    {selectedProperty && (
+                      <p className="text-xs text-slate-500 mt-1">ID: {propertyId}</p>
+                    )}
+                  </div>
+                  <div>
+                    <label className="block text-sm text-slate-400">Unit</label>
+                    <select
+                      value={unitId}
+                      onChange={(e) => setUnitId(e.target.value)}
+                      className="mt-1 w-full rounded-xl bg-white/10 border border-white/20 p-3 text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                      disabled={loading || !propertyId}
+                      required
+                    >
+                      <option value="" className="bg-slate-800">
+                        {propertyId ? "Select a unit" : "Select property first"}
+                      </option>
+                      {filteredUnits.map((unit) => (
+                        <option key={unit.id} value={unit.id} className="bg-slate-800">
+                          {unit.name}
+                        </option>
+                      ))}
+                    </select>
+                    {selectedUnit && (
+                      <p className="text-xs text-slate-500 mt-1">ID: {unitId}</p>
+                    )}
+                  </div>
+                </div>
+                <div className="mt-4">
+                  <label className="block text-sm text-slate-400">Move-In Date (Optional)</label>
+                  <input
+                    type="date"
+                    value={moveInDate}
+                    onChange={(e) => setMoveInDate(e.target.value)}
                     className="mt-1 w-full rounded-xl bg-white/10 border border-white/20 p-3 text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
                     disabled={loading}
-                    required
-                  >
-                    <option value="" className="bg-slate-800">Select a property</option>
-                    {properties.map((prop) => (
-                      <option key={prop.id} value={prop.id} className="bg-slate-800">
-                        {prop.name}
-                      </option>
-                    ))}
-                  </select>
-                  {selectedProperty && (
-                    <p className="text-xs text-slate-500 mt-1">ID: {propertyId}</p>
-                  )}
-                </div>
-                <div>
-                  <label className="block text-sm text-slate-400">Unit</label>
-                  <select
-                    value={unitId}
-                    onChange={(e) => setUnitId(e.target.value)}
-                    className="mt-1 w-full rounded-xl bg-white/10 border border-white/20 p-3 text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-                    disabled={loading || !propertyId}
-                    required
-                  >
-                    <option value="" className="bg-slate-800">
-                      {propertyId ? "Select a unit" : "Select property first"}
-                    </option>
-                    {filteredUnits.map((unit) => (
-                      <option key={unit.id} value={unit.id} className="bg-slate-800">
-                        {unit.name}
-                      </option>
-                    ))}
-                  </select>
-                  {selectedUnit && (
-                    <p className="text-xs text-slate-500 mt-1">ID: {unitId}</p>
-                  )}
-                </div>
-              </div>
-              <div className="mt-4">
-                <label className="block text-sm text-slate-400">Move-In Date (Optional)</label>
-                <input
-                  type="date"
-                  value={moveInDate}
-                  onChange={(e) => setMoveInDate(e.target.value)}
-                  className="mt-1 w-full rounded-xl bg-white/10 border border-white/20 p-3 text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-                  disabled={loading}
-                />
-              </div>
-            </div>
-
-            {/* Rent Details */}
-            <div className="border-b border-white/10 pb-6">
-              <h2 className="text-sm font-semibold text-slate-300 mb-4">Rent Details</h2>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm text-slate-400">Due Day (1-31)</label>
-                  <input
-                    type="number"
-                    min="1"
-                    max="31"
-                    value={dueDay}
-                    onChange={(e) => setDueDay(e.target.value)}
-                    className="mt-1 w-full rounded-xl bg-white/10 border border-white/20 p-3 text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-                    disabled={loading}
-                    required
                   />
+                  {moveInDate && (
+                    <p className="text-xs text-blue-400 mt-2">
+                      Due date will be on the {new Date(moveInDate).getDate()}{getOrdinalSuffix(new Date(moveInDate).getDate())} of each month
+                    </p>
+                  )}
                 </div>
+              </div>
+
+              {/* Rent Details */}
+              <div className="border-b border-white/10 pb-6">
+                <h2 className="text-sm font-semibold text-slate-300 mb-4">Rent Details</h2>
                 <div>
                   <label className="block text-sm text-slate-400">Monthly Rent</label>
                   <input
@@ -290,41 +290,40 @@ export default function AddTenant() {
                   />
                 </div>
               </div>
-            </div>
 
-            {/* Account Status */}
-            <div className="pb-6">
-              <h2 className="text-sm font-semibold text-slate-300 mb-4">Account Status</h2>
-              <div>
-                <label className="block text-sm text-slate-400">Status</label>
-                <select
-                  value={accountStatus}
-                  onChange={(e) => setAccountStatus(e.target.value)}
-                  className="mt-1 w-full rounded-xl bg-white/10 border border-white/20 p-3 text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-                  disabled={loading}
-                >
-                  <option value="active" className="bg-slate-800">Active</option>
-                  <option value="inactive" className="bg-slate-800">Inactive</option>
-                </select>
+              {/* Account Status */}
+              <div className="pb-6">
+                <h2 className="text-sm font-semibold text-slate-300 mb-4">Account Status</h2>
+                <div>
+                  <label className="block text-sm text-slate-400">Status</label>
+                  <select
+                    value={accountStatus}
+                    onChange={(e) => setAccountStatus(e.target.value)}
+                    className="mt-1 w-full rounded-xl bg-white/10 border border-white/20 p-3 text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                    disabled={loading}
+                  >
+                    <option value="active" className="bg-slate-800">Active</option>
+                    <option value="inactive" className="bg-slate-800">Inactive</option>
+                  </select>
+                </div>
               </div>
-            </div>
 
-            {/* Form Actions */}
-            <div className="flex items-center gap-3 pt-4">
-              <button
-                type="submit"
-                disabled={loading}
-                className="rounded-xl bg-gradient-to-r from-blue-500 to-blue-600 px-6 py-3 text-white hover:from-blue-600 hover:to-blue-700 transition-all duration-300 shadow-lg hover:shadow-blue-500/50 font-medium disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {loading ? "Creating..." : "Create Tenant"}
-              </button>
-              <Link
-                href="/owner/dashboard"
-                className="rounded-xl border border-white/20 px-6 py-3 text-slate-300 hover:bg-white/10 transition-colors"
-              >
-                Cancel
-              </Link>
-            </div>
+              {/* Form Actions */}
+              <div className="flex items-center gap-3 pt-4">
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className="rounded-xl bg-gradient-to-r from-blue-500 to-blue-600 px-6 py-3 text-white hover:from-blue-600 hover:to-blue-700 transition-all duration-300 shadow-lg hover:shadow-blue-500/50 font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {loading ? "Creating..." : "Create Tenant"}
+                </button>
+                <Link
+                  href="/owner/dashboard"
+                  className="rounded-xl border border-white/20 px-6 py-3 text-slate-300 hover:bg-white/10 transition-colors"
+                >
+                  Cancel
+                </Link>
+              </div>
             </form>
           )}
         </div>
