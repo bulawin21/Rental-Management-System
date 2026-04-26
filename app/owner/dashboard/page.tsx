@@ -268,7 +268,7 @@ export default function OwnerDashboard() {
           activities.push({
             id: `tenant-${tenant.id}`,
             type: 'tenant',
-            description: `New tenant added: ${tenant.profiles?.full_name || 'Unknown'} to ${tenant.units?.name || 'Unknown'}`,
+            description: `New tenant added: ${tenant.profiles?.[0]?.full_name || 'Unknown'} to ${tenant.units?.[0]?.name || 'Unknown'}`,
             timestamp: tenant.created_at
           });
         });
@@ -306,7 +306,7 @@ export default function OwnerDashboard() {
           activities.push({
             id: `unit-${unit.id}`,
             type: 'unit',
-            description: `New unit added: ${unit.name} at ${unit.properties?.name || 'Unknown'}`,
+            description: `New unit added: ${unit.name} at ${unit.properties?.[0]?.name || 'Unknown'}`,
             timestamp: unit.created_at
           });
         });
@@ -341,8 +341,8 @@ export default function OwnerDashboard() {
           payment_method: payment.payment_method,
           payment_date: payment.payment_date,
           status: payment.status,
-          tenant_name: payment.tenants?.profiles?.full_name || 'Unknown',
-          property_name: payment.properties?.name || 'Unknown',
+          tenant_name: payment.tenants?.[0]?.profiles?.[0]?.full_name || 'Unknown',
+          property_name: payment.properties?.[0]?.name || 'Unknown',
           created_at: payment.created_at
         }));
         setRecentPayments(payments);
