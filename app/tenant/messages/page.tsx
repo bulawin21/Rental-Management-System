@@ -23,6 +23,47 @@ export default function TenantMessages() {
     loadMessages();
   }, []);
 
+  // Set up real-time subscription for messages
+  useEffect(() => {
+    let mounted = true;
+    let channel: any = null;
+
+    const setupSubscription = async () => {
+      if (!mounted) return;
+
+      const userResponse = await supabase.auth.getUser();
+      const user = userResponse.data?.user;
+      if (!user || !mounted) return;
+
+      channel = supabase
+        .channel('tenant-messages')
+        .on(
+          'postgres_changes',
+          {
+            event: 'INSERT',
+            schema: 'public',
+            table: 'messages',
+            filter: `tenant_profile_id=eq.${user.id}`
+          },
+          (payload) => {
+            console.log('New message received:', payload);
+            // Reload messages when a new message is inserted
+            loadMessages();
+          }
+        )
+        .subscribe();
+    };
+
+    setupSubscription();
+
+    return () => {
+      mounted = false;
+      if (channel) {
+        supabase.removeChannel(channel);
+      }
+    };
+  }, []);
+
   const loadMessages = async () => {
     try {
       setLoading(true);

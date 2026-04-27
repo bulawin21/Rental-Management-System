@@ -47,6 +47,47 @@ export default function MessagesPage() {
     }
   }, [selectedTenant]);
 
+  // Set up real-time subscription for messages
+  useEffect(() => {
+    let mounted = true;
+    let channel: any = null;
+
+    const setupSubscription = async () => {
+      if (!selectedTenant || !mounted) return;
+
+      const userResponse = await supabase.auth.getUser();
+      const user = userResponse.data?.user;
+      if (!user || !mounted) return;
+
+      channel = supabase
+        .channel(`messages-${selectedTenant.id}`)
+        .on(
+          'postgres_changes',
+          {
+            event: 'INSERT',
+            schema: 'public',
+            table: 'messages',
+            filter: `owner_id=eq.${user.id}&tenant_profile_id=eq.${selectedTenant.profile_id}`
+          },
+          (payload) => {
+            console.log('New message received:', payload);
+            // Reload messages when a new message is inserted
+            loadMessages();
+          }
+        )
+        .subscribe();
+    };
+
+    setupSubscription();
+
+    return () => {
+      mounted = false;
+      if (channel) {
+        supabase.removeChannel(channel);
+      }
+    };
+  }, [selectedTenant]);
+
   const loadTenants = async () => {
     try {
       const { data: { user } } = await supabase.auth.getUser();
