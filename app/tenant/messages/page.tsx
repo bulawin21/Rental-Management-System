@@ -42,16 +42,20 @@ export default function TenantMessages() {
           {
             event: 'INSERT',
             schema: 'public',
-            table: 'messages',
-            filter: `tenant_profile_id=eq.${user.id}`
+            table: 'messages'
           },
           (payload) => {
-            console.log('New message received:', payload);
-            // Reload messages when a new message is inserted
-            loadMessages();
+            const newMessage = payload.new as Message;
+            // Check if this message is for the current tenant
+            if (newMessage.tenant_profile_id === user.id) {
+              console.log('New message received:', payload);
+              loadMessages();
+            }
           }
         )
-        .subscribe();
+        .subscribe((status) => {
+          console.log('Subscription status:', status);
+        });
     };
 
     setupSubscription();

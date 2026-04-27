@@ -66,16 +66,20 @@ export default function MessagesPage() {
           {
             event: 'INSERT',
             schema: 'public',
-            table: 'messages',
-            filter: `owner_id=eq.${user.id}&tenant_profile_id=eq.${selectedTenant.profile_id}`
+            table: 'messages'
           },
           (payload) => {
-            console.log('New message received:', payload);
-            // Reload messages when a new message is inserted
-            loadMessages();
+            const newMessage = payload.new as Message;
+            // Check if this message is for the current conversation
+            if (newMessage.owner_id === user.id && newMessage.tenant_profile_id === selectedTenant.profile_id) {
+              console.log('New message received:', payload);
+              loadMessages();
+            }
           }
         )
-        .subscribe();
+        .subscribe((status) => {
+          console.log('Subscription status:', status);
+        });
     };
 
     setupSubscription();
