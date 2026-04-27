@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { supabase } from "@/lib/supabase";
 
 interface Message {
@@ -17,6 +17,15 @@ export default function TenantMessages() {
   const [loading, setLoading] = useState(false);
   const [messageInput, setMessageInput] = useState("");
   const [error, setError] = useState("");
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  };
+
+  useEffect(() => {
+    scrollToBottom();
+  }, [messages]);
 
   // Load messages on mount
   useEffect(() => {
@@ -248,6 +257,7 @@ export default function TenantMessages() {
                       </div>
                     );
                   })}
+                <div ref={messagesEndRef} />
               </div>
             )}
           </div>

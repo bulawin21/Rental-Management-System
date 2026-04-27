@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { supabase } from "@/lib/supabase";
 
@@ -34,6 +34,15 @@ export default function MessagesPage() {
   const [loading, setLoading] = useState(false);
   const [messageInput, setMessageInput] = useState("");
   const [error, setError] = useState("");
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  };
+
+  useEffect(() => {
+    scrollToBottom();
+  }, [messages]);
 
   // Load tenants on mount
   useEffect(() => {
@@ -186,9 +195,9 @@ export default function MessagesPage() {
 
   return (
     <div className="flex h-screen overflow-hidden bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
-      {/* Sidebar */}
-      <div className="w-64 bg-white/10 backdrop-blur-lg border-r border-white/20 flex flex-col flex-shrink-0">
-        <div className="p-5 border-b border-white/10 flex-shrink-0">
+      {/* Tenant List - Hidden on mobile when chat is open */}
+      <div className={`${selectedTenant ? 'hidden md:flex' : 'flex'} w-full md:w-80 flex-col border-r border-white/20 bg-white/10 backdrop-blur-lg`}>
+        <div className="p-5 border-b border-white/10">
           <h2 className="text-lg font-semibold text-emerald-400">Tenants</h2>
           <p className="text-xs text-slate-400 mt-1">Select a tenant to view messages</p>
         </div>
@@ -233,130 +242,131 @@ export default function MessagesPage() {
         </div>
       </div>
 
-      {/* Chat Area */}
-      <div className="flex flex-col flex-1 h-full">
-        {/* Header */}
-        <div className="p-5 border-b border-white/10 flex-shrink-0">
-          <h1 className="text-2xl font-bold text-white">Messages</h1>
-          <p className="text-slate-300 mt-1 text-sm">Communicate with your tenants</p>
-        </div>
-
-        {/* Chat Panel */}
-        <div className="flex-1 flex flex-col overflow-hidden">
-          {!selectedTenant ? (
-            <div className="flex-1 flex flex-col items-center justify-center text-slate-400">
-              <div className="w-16 h-16 rounded-full bg-white/10 flex items-center justify-center mb-4">
-                <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
-                </svg>
-              </div>
-              <p className="text-sm">Select a tenant to start messaging</p>
+      {/* Chat Area - Hidden on mobile when no tenant selected */}
+      <div className={`${!selectedTenant ? 'hidden md:flex' : 'flex'} flex-1 flex flex-col`}>
+        {!selectedTenant ? (
+          <div className="flex-1 flex flex-col items-center justify-center text-slate-400">
+            <div className="w-16 h-16 rounded-full bg-white/10 flex items-center justify-center mb-4">
+              <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+              </svg>
             </div>
-          ) : (
-            <div className="flex flex-col h-full">
-              {/* Chat Header */}
-              <div className="p-5 border-b border-white/10 flex-shrink-0">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center text-white font-semibold text-lg">
-                    {selectedTenant.profiles?.full_name?.charAt(0).toUpperCase() || 'T'}
+            <p className="text-sm">Select a tenant to start messaging</p>
+          </div>
+        ) : (
+          <>
+            {/* Chat Header */}
+            <div className="p-5 border-b border-white/10 flex-shrink-0">
+              <div className="flex items-center gap-3">
+                {/* Mobile back button */}
+                <button
+                  onClick={() => setSelectedTenant(null)}
+                  className="md:hidden p-2 text-slate-400 hover:text-white"
+                >
+                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                  </svg>
+                </button>
+                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center text-white font-semibold text-lg">
+                  {selectedTenant.profiles?.full_name?.charAt(0).toUpperCase() || 'T'}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="font-medium text-white truncate">
+                    {selectedTenant.profiles?.full_name || 'Unknown Tenant'}
                   </div>
-                  <div>
-                    <div className="font-medium text-white">
-                      {selectedTenant.profiles?.full_name || 'Unknown Tenant'}
-                    </div>
-                    <div className="text-xs text-slate-400">
-                      {Array.isArray(selectedTenant.units) 
-                        ? `${selectedTenant.units[0]?.name || 'Unknown Unit'} • ${selectedTenant.units[0]?.properties?.name || 'Unknown Property'}`
-                        : `${selectedTenant.units?.name || 'Unknown Unit'} • ${selectedTenant.units?.properties?.name || 'Unknown Property'}`
-                      }
-                    </div>
+                  <div className="text-xs text-slate-400 truncate">
+                    {Array.isArray(selectedTenant.units) 
+                      ? `${selectedTenant.units[0]?.name || 'Unknown Unit'} • ${selectedTenant.units[0]?.properties?.name || 'Unknown Property'}`
+                      : `${selectedTenant.units?.name || 'Unknown Unit'} • ${selectedTenant.units?.properties?.name || 'Unknown Property'}`
+                    }
                   </div>
                 </div>
               </div>
+            </div>
 
-              {/* Chat Messages */}
-              <div className="flex-1 overflow-y-auto p-5 bg-white/5 space-y-4 min-h-0">
-                {loading ? (
-                  <div className="text-center text-slate-400">
-                    <div className="inline-block animate-spin rounded-full h-6 w-6 border-b-2 border-white mb-2"></div>
-                    <p className="text-sm">Loading messages...</p>
+            {/* Chat Messages */}
+            <div className="flex-1 overflow-y-auto p-4 bg-white/5 space-y-4 min-h-0">
+              {loading ? (
+                <div className="text-center text-slate-400">
+                  <div className="inline-block animate-spin rounded-full h-6 w-6 border-b-2 border-white mb-2"></div>
+                  <p className="text-sm">Loading messages...</p>
+                </div>
+              ) : messages.length === 0 ? (
+                <div className="text-center text-slate-400">
+                  <div className="w-12 h-12 rounded-full bg-white/10 flex items-center justify-center mx-auto mb-3">
+                    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                    </svg>
                   </div>
-                ) : messages.length === 0 ? (
-                  <div className="text-center text-slate-400">
-                    <div className="w-12 h-12 rounded-full bg-white/10 flex items-center justify-center mx-auto mb-3">
-                      <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
-                      </svg>
-                    </div>
-                    <p className="text-sm">No messages yet</p>
-                    <p className="text-xs mt-2">Start the conversation with a message</p>
-                  </div>
-                ) : (
-                  <div className="space-y-4">
-                    {messages.map((message) => {
-                      const isOwnMessage = message.sender_role === 'owner';
-                      const alignment = isOwnMessage ? 'justify-end' : 'justify-start';
-                      const bubbleStyle = isOwnMessage 
-                        ? 'bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-br-sm' 
-                        : 'bg-white/10 text-white rounded-bl-sm';
-                      
-                      return (
+                  <p className="text-sm">No messages yet</p>
+                  <p className="text-xs mt-2">Start the conversation with a message</p>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {messages.map((message) => {
+                    const isOwnMessage = message.sender_role === 'owner';
+                    const alignment = isOwnMessage ? 'justify-end' : 'justify-start';
+                    const bubbleStyle = isOwnMessage 
+                      ? 'bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-br-sm' 
+                      : 'bg-white/10 text-white rounded-bl-sm';
+                    
+                    return (
+                      <div
+                        key={message.id}
+                        className={`flex ${alignment}`}
+                      >
                         <div
-                          key={message.id}
-                          className={`flex ${alignment}`}
+                          className={`max-w-md rounded-2xl px-4 py-3 text-sm ${bubbleStyle}`}
                         >
-                          <div
-                            className={`max-w-md rounded-2xl px-4 py-3 text-sm ${bubbleStyle}`}
-                          >
-                            <div className="break-words">{message.message}</div>
-                            <div className={`text-xs mt-2 ${isOwnMessage ? 'text-blue-100' : 'text-slate-400'}`}>
-                              {new Date(message.created_at).toLocaleString([], {
-                                hour: '2-digit',
-                                minute: '2-digit',
-                                month: 'short',
-                                day: 'numeric'
-                              })}
-                            </div>
+                          <div className="break-words">{message.message}</div>
+                          <div className={`text-xs mt-2 ${isOwnMessage ? 'text-blue-100' : 'text-slate-400'}`}>
+                            {new Date(message.created_at).toLocaleString([], {
+                              hour: '2-digit',
+                              minute: '2-digit',
+                              month: 'short',
+                              day: 'numeric'
+                            })}
                           </div>
                         </div>
-                      );
-                    })}
-                  </div>
-                )}
-              </div>
-
-              {/* Chat Input */}
-              <div className="p-5 border-t border-white/10 flex-shrink-0">
-                {error && (
-                  <div className="mb-3 p-3 bg-red-500/20 border border-red-500/50 rounded-xl">
-                    <p className="text-sm text-red-200">{error}</p>
-                  </div>
-                )}
-                <div className="flex gap-3">
-                  <input
-                    type="text"
-                    value={messageInput}
-                    onChange={(e) => setMessageInput(e.target.value)}
-                    placeholder="Type your message..."
-                    className="flex-1 rounded-xl bg-white/10 border border-white/20 p-4 text-sm text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-                    onKeyPress={(e) => {
-                      if (e.key === 'Enter') {
-                        handleSendMessage();
-                      }
-                    }}
-                  />
-                  <button 
-                    onClick={handleSendMessage}
-                    disabled={!messageInput.trim()}
-                    className="rounded-xl bg-gradient-to-r from-blue-500 to-blue-600 px-8 py-4 text-white text-sm hover:from-blue-600 hover:to-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 shadow-lg hover:shadow-blue-500/50 font-medium"
-                  >
-                    Send
-                  </button>
+                      </div>
+                    );
+                  })}
+                  <div ref={messagesEndRef} />
                 </div>
+              )}
+            </div>
+
+            {/* Chat Input */}
+            <div className="p-4 border-t border-white/10 flex-shrink-0">
+              {error && (
+                <div className="mb-3 p-3 bg-red-500/20 border border-red-500/50 rounded-xl">
+                  <p className="text-sm text-red-200">{error}</p>
+                </div>
+              )}
+              <div className="flex gap-3">
+                <input
+                  type="text"
+                  value={messageInput}
+                  onChange={(e) => setMessageInput(e.target.value)}
+                  placeholder="Type your message..."
+                  className="flex-1 rounded-xl bg-white/10 border border-white/20 p-4 text-sm text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                  onKeyPress={(e) => {
+                    if (e.key === 'Enter') {
+                      handleSendMessage();
+                    }
+                  }}
+                />
+                <button 
+                  onClick={handleSendMessage}
+                  disabled={!messageInput.trim()}
+                  className="rounded-xl bg-gradient-to-r from-blue-500 to-blue-600 px-8 py-4 text-white text-sm hover:from-blue-600 hover:to-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 shadow-lg hover:shadow-blue-500/50 font-medium"
+                >
+                  Send
+                </button>
               </div>
             </div>
-          )}
-        </div>
+          </>
+        )}
       </div>
     </div>
   );
