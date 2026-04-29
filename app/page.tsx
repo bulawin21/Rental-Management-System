@@ -13,7 +13,7 @@ export default function Home() {
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
             </svg>
           </div>
-          <h1 className="text-5xl font-bold mb-4 tracking-tight">Rental Management System</h1>
+          <h1 className="text-5xl font-bold mb-4 tracking-tight">Portal</h1>
         </header>
 
         <section className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl mx-auto">
@@ -61,7 +61,7 @@ export default function Home() {
         </section>
 
         <footer className="mt-20 text-center text-slate-400 text-sm">
-          <p>© 2026 Rental Management System. All rights reserved.</p>
+          <p>© 2026 Portal. All rights reserved.</p>
         </footer>
       </main>
     </div>
