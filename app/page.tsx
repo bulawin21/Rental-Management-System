@@ -60,7 +60,7 @@ export default function Home() {
               </svg>
             </div>
             <h1 className="text-5xl font-bold tracking-tight mb-3 bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">
-              Rental Portal
+              Property Management
             </h1>
             <p className="text-slate-400 text-lg">Welcome back! Sign in to access your account</p>
           </div>
