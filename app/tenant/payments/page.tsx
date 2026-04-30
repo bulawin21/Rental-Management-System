@@ -14,6 +14,14 @@ interface TenantData {
   account_status: string;
 }
 
+interface PropertyDetails {
+  name: string;
+}
+
+interface UnitDetails {
+  name: string;
+}
+
 interface Payment {
   id: string;
   amount: number;
@@ -25,6 +33,8 @@ interface Payment {
 
 export default function TenantPayments() {
   const [tenantData, setTenantData] = useState<TenantData | null>(null);
+  const [propertyDetails, setPropertyDetails] = useState<PropertyDetails | null>(null);
+  const [unitDetails, setUnitDetails] = useState<UnitDetails | null>(null);
   const [payments, setPayments] = useState<Payment[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -109,6 +119,32 @@ export default function TenantPayments() {
       console.log("=== End Loading Tenant Payments Data ===");
 
       setTenantData(tenantRow);
+
+      // Load property details
+      const { data: propertyData, error: propertyError } = await supabase
+        .from("properties")
+        .select("name")
+        .eq("id", tenantRow.property_id)
+        .single();
+
+      if (propertyError) {
+        console.error("Error loading property:", propertyError);
+      } else {
+        setPropertyDetails(propertyData);
+      }
+
+      // Load unit details
+      const { data: unitData, error: unitError } = await supabase
+        .from("units")
+        .select("name")
+        .eq("id", tenantRow.unit_id)
+        .single();
+
+      if (unitError) {
+        console.error("Error loading unit:", unitError);
+      } else {
+        setUnitDetails(unitData);
+      }
 
       // Load payments for this tenant
       const { data: paymentRows, error: paymentsError } = await supabase
@@ -413,10 +449,10 @@ export default function TenantPayments() {
                 {/* Property and Unit Info (Auto-filled) */}
                 <div className="bg-white/5 p-3 rounded-lg border border-white/10">
                   <p className="text-sm text-slate-300">
-                    <strong>Property:</strong> Your Assigned Property
+                    <strong>Property:</strong> {propertyDetails?.name || "Loading..."}
                   </p>
                   <p className="text-sm text-slate-300">
-                    <strong>Unit:</strong> Your Assigned Unit
+                    <strong>Unit:</strong> {unitDetails?.name || "Loading..."}
                   </p>
                   <p className="text-sm text-slate-300">
                     <strong>Amount:</strong> ₱{tenantData?.monthly_rent?.toFixed(2) || "Loading..."}
@@ -435,6 +471,7 @@ export default function TenantPayments() {
                     required
                   >
                     <option value="GCash" className="bg-slate-800">GCash</option>
+                    <option value="Bank Transfer" className="bg-slate-800">Bank Transfer</option>
                     <option value="Counter" className="bg-slate-800">Counter Payment</option>
                   </select>
                 </div>
